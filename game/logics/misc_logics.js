@@ -81,7 +81,8 @@ MouseClickTileLogic.prototype.run = function() {
     }
     if (ace3.eventManager.mouseReleased()) {
         var mp = ace3.getViewportMousePosition()
-        if (Math.abs(mp.x - this.pressPos.x) < this.clickThreshold && Math.abs(mp.y - this.pressPos.y) < this.clickThreshold) {
+        if (Math.abs(mp.x - this.pressPos.x) < this.clickThreshold && 
+            Math.abs(mp.y - this.pressPos.y) < this.clickThreshold) {
             //I will consider it a click.
             var pm = ace3.pickManager
             pm.pickActor()
@@ -89,8 +90,9 @@ MouseClickTileLogic.prototype.run = function() {
 
             if (p != null) {
                 var pt = p.getType()
-                if (pt == 'Tile' || pt == 'StartTile') {
-                    p.flip()
+                var pa = p.action
+                if (pa) {
+                    p.action()
                 }
             }
         }

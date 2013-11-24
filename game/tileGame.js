@@ -20,14 +20,11 @@ var optimizer = null // optimizer is a memory used throughout the entire game to
 // var displayInfo = null //actor that shows dynamic info on screen during game.
 var player = null;
 
-var tiles = [];
 var currentPlatform = null; // the platform where the robot resides
 var prevPlatform = null; // the going-away platform
 var nextPlatform = null; // the coming platform 
 
-var checkPoints = [];
-
-var tileMap = []
+var tileMapConfig = null;
 
 Physijs.scripts.worker = 'ace3/lib/physijs_worker.js';
 Physijs.scripts.ammo = 'ammo.js';
@@ -43,110 +40,9 @@ function game_init() {
     // optimizer = new Optimizer()
     gameManager = ace3.defaultActorManager
 
+    tileMapConfig = new TileMapConfig()
+    tileMapConfig.loadMap("test")
 
-    var startTileCoords = [0, 3]
-    var endTileCoords = [9, 5]
-    var size = 3
-    var distance = 3.2
-    var tileMapSize = {w:6, h:6}
-    for (var i = 0; i < tileMapSize.w; i++) {
-        tileMap[i] = []
-        for (var j = 0; j < tileMapSize.h; j++) {
-            //console.log("doing " + i + "," + j)
-            var t = null
-            if (startTileCoords[0] == i && startTileCoords[1] == j) {
-                var t = new StartTile(new THREE.Vector3(i * distance, 3, j * distance), i, j, size, 
-                             0xffff00, 0)
-            }else {
-                var t = new Tile(new THREE.Vector3(i * distance, 3, j * distance), i, j, size, 
-                             0x000000, 0)
-            }
-
-            gameManager.registerActor(t)
-            tileMap[i][j] = t
-            t.setPickable()
-        }
-    }
-
-    //adding ascending polygons (as background)
-    // for (var i=0; i < 25; i++) {
-    //     gameManager.registerActor(new AscendingPolygon());
-    // }
-
-    // var skyBox = new ACE3.SkyBox("media/sb1-")
-    // gameManager.registerActor(skyBox)
-
-    // var cameraFollowLogic = new ACE3.Logic();
-    // cameraFollowLogic.followSpeed = 0.1;
-    // cameraFollowLogic.run = function() {
-    //     var tp = new THREE.Vector3(player.obj.position.x, 
-    //                                player.obj.position.y + 13,   //10
-    //                                player.obj.position.z + 22);  //28
-    //     var cp = ace3.camera.pivot.position;
-    //     if (cp.distanceTo(tp) > 0.6) { 
-    //         var d = ACE3.Math.getDirection(cp, tp);
-    //         cp.add(d.multiplyScalar(this.followSpeed)); 
-    //     } else {
-    //         cp.x = tp.x; cp.y = tp.y; cp.z = tp.z;
-    //     }
-    //     ace3.camera.lookAt(player.obj.position);
-    // }
-
-
-
-    // var selectorLogic = new ACE3.Logic();
-    // selectorLogic.selectedPlatform = null;
-    // selectorLogic.selectedEnemy = null;
-    // selectorLogic.jumpForce = 0;
-
-    // //selectorLogic.info = new ACE3.DisplayValue("Force", "0", ace3.getFromRatio(5, 5));
-    // //gameManager.registerActor(selectorLogic.info);
-
-    // selectorLogic.run = function() {
-    //     var pm = ace3.pickManager
-    //     if (ace3.eventManager.mouseReleased()) { // 'x'
-    //         pm.pickActor();
-    //         var p = pm.pickedActor;
-    //         if (GameUtils.isEnemy(p)) {
-    //             this.selectedEnemy = p;               
-    //         }        
-    //         if (this.selectedEnemy != null) {
-    //             //this.selectedBird.setForRemoval();
-    //             player.shootAt(this.selectedEnemy);
-    //             this.selectedEnemy = null;
-    //         }
-    //     }            
-    // }
-
-    // //Display infos (temporary)
-    // var playerLifeInfo = new ACE3.DisplayValue("LIFE", "", ace3.getFromRatio(15, 97))
-    // playerLifeInfo.valueFunction = function() {
-    //     return "" + player.life
-    // }
-    // var playerNrgInfo = new ACE3.DisplayValue("NRG", "", ace3.getFromRatio(35, 97))
-    // playerNrgInfo.valueFunction = function() {
-    //     return "" + player.energy
-    // }
-    // var playerExpInfo = new ACE3.DisplayValue("XP", "", ace3.getFromRatio(55, 97))
-    // playerExpInfo.valueFunction = function() {
-    //     return "" + player.levels.exp
-    // }
-    // var platformOverrideInfo = new ACE3.DisplayValue("override progress", "", ace3.getFromRatio(75, 97))
-    // platformOverrideInfo.valueFunction = function() {
-    //     return "" + currentPlatform.overrideTime
-    // }
-
-
-
-    // gameManager.registerActor(playerLifeInfo)
-    // gameManager.registerActor(playerNrgInfo)
-    // gameManager.registerActor(playerExpInfo)
-    // gameManager.registerActor(platformOverrideInfo)
-
-    // gameManager.registerLogic(cameraFollowLogic);
-    // gameManager.registerLogic(selectorLogic);
-    // add alternative controls to player (DISABLED)
-    //gameManager.registerLogic(player.playerControlsLogic)
     //DISABLE DEFAULT CAMERA BEHAVIOUR
     ace3.camera.control = function() {};
     // gameManager.registerLogic(new EnemyCallLogic(0.5));
@@ -171,7 +67,7 @@ function camera_reset_position() {
     ace3.camera.cameraObj.rotation.y = 0
     ace3.camera.cameraObj.rotation.z = 0
     ace3.camera.cameraObj.rotation.x = - Math.PI/4  
-    ace3.camera.pivot.position.set(18, 20, 28)
+    ace3.camera.pivot.position.set(13, 20, 28)
     ace3.camera.speed = 0.1
 }
 
@@ -240,25 +136,6 @@ GameUtils = {
         } 
         return false
     },
-    getTile: function(mapx, mapz) {
-        if (tileMap[mapx] != null && tileMap[mapx][mapz] != null) {
-            return tileMap[mapx][mapz]
-        }
-        return null
-    },
-}
-
-
-// TODO : add to the ACE3.Utils
-/**
-* The materials are in order, and they have to be as much as the faces.
-*/
-function getFaceMesh(geometry, material) {
-    // assign a material to each face (each face is 2 triangles)
-    for (i in materials) {
-        g.faces[i].materialIndex = i
-    }
-    return new THREE.Mesh( geometry, new THREE.MeshFaceMaterial( materials ) );
 }
 
 

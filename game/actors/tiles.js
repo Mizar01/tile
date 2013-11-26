@@ -52,13 +52,13 @@ TileMapConfig = function() {
 						 "03": "Tile3Go",
 						 "EN": "EndTile",
 						 "SS": "TileSwitchStatusAround",
-						 //"BE": "TileBeam",
+						 "BE": "TileBeam",
 						}
 
 
     this.mapStrings = {
     	"test" :     "ST,**,01,01,BE,01-" +
-	                 "01,02,01,03,**,01-" +
+	                 "BE,02,01,03,**,01-" +
 	                 "01,01,01,01,**,01-" +
 	                 "01,01,SS,02,**,EN-" +
 	                 "01,03,01,02,BE,01-" +
@@ -334,14 +334,14 @@ StartTile = function(mapX, mapZ) {
 }
 StartTile.extends(BaseTile, "StartTile")
 
-StartTile.prototype.defineObj = function(color, borderColor, shader) {
-	color = color || 0xffff00
-	borderColor = borderColor || 0xff0000
+StartTile.prototype.defineObj = function(color1, color2, shader) {
+	color1 = color1 || 0xffff00
+	color2 = color2 || 0xff0000
 	shader = shader || "borderShader"
 	this.uniform = ACE3.Utils.getStandardUniform();
 	this.uniform.borderSize = { type: 'f', value: '0.1'};
-	this.uniform.borderColor = {type: 'v3', value: ACE3.Utils.getVec3Color(borderColor)};
-	this.uniform.color.value = ACE3.Utils.getVec3Color(color);
+	this.uniform.borderColor = {type: 'v3', value: ACE3.Utils.getVec3Color(color2)};
+	this.uniform.color.value = ACE3.Utils.getVec3Color(color1);
 	var g = new THREE.CubeGeometry(this.width, 0.3, this.width)
 	smTemp = ACE3.Utils.getStandardShaderMesh(this.uniform, "generic", shader, g);
 	var physMesh = Physijs.createMaterial(smTemp.material, 0.4, 0.6);
@@ -421,38 +421,89 @@ TileSwitchStatusAround.prototype.trigger = function() {
 	}	
 }
 
-/*
+
 TileBeam = function(mapX, mapZ) {
 	BaseTile.call(this, mapX, mapZ, { flippable: false, pickable: true})
 	this.orient = 0
+	this.targetOrient = 0
 	this.beamOn = false 
+	this.isRotating = false
+	this.side =  -1
 }
 TileBeam.extends(BaseTile, "TileBeam")
 TileBeam.prototype.defineObj = function() {
 	to = StartTile.prototype.defineObj.call(this, 0xff0000, 0xffffff) 
-	to.add(ACE3.Builder.cube(1, 0xff00ff))
+    this.towerObj = ACE3.Builder.cylinder(0.4, 1, 0x000000, 1)
+    this.towerObj.position.y = 0.5
+    to.add(this.towerObj)
+    this.beamObj = this.defineBeamObj()
+    this.beamObj.position.x  = 5
+    this.towerObj.add(this.beamObj)
 	return to
 }
-TileBeam.prototype.action = function() {
-	this.orient = (this.orient + 1) % 4
-	this.obj.rotation.y = Math.PI * this.orient
-	this.obj.__dirtyRotation = true
+
+TileBeam.prototype.defineBeamObj = function() {
+	color = 0xffff00
+	shader = "beamShader"
+	this.beamUniform = ACE3.Utils.getStandardUniform();
+	this.beamUniform.color.value = ACE3.Utils.getVec3Color(color);
+	var g = new THREE.CubeGeometry(10, 0.1, 0.1)
+	var mesh = ACE3.Utils.getStandardShaderMesh(this.beamUniform, "generic", shader, g)
+	mesh.material.transparent = true
+	return mesh
 }
-TileBeam.prototype.run = function() {
-	var cntTiles = this.getNearTiles()
-	if (cntTiles >= 1 && this.beamOn == false) {
-		this.enableBeam()
-	}else if (cntTiles >= 1 && this.beamOn == true) {
-		this.disableBeam()
+
+TileBeam.prototype.action = function() {
+	if (this.beamOn) {
+		if (!this.isRotating) {
+			this.targetOrient = this.orient + 1
+		}
 	}
 }
+TileBeam.prototype.run = function() {
+	var cntTiles = this.getNearTiles().length
+	if (cntTiles >= 1 && !this.beamOn) {
+		this.enableBeam()
+	}else if (cntTiles < 1 && this.beamOn) {
+		this.disableBeam()
+	}
+
+	if (this.orient != this.targetOrient) {
+		this.rotateToTargetOrientation()
+	}
+	this.uniform.time.value = ace3.time.frameTime
+}
+
+TileBeam.prototype.rotateToTargetOrientation = function() {
+	var tAngle = Math.PI / 2 * this.targetOrient
+	var cAngle = this.towerObj.rotation.y
+	if (tAngle <= cAngle) {
+		this.orient = this.targetOrient
+		this.towerObj.rotation.y = tAngle
+		if (this.orient == 4) {
+			this.orient = 0
+			this.targetOrient = 0
+			this.towerObj.rotation.y = 0
+		}
+		this.isRotating = false
+	} else {
+		this.towerObj.rotation.y += 0.01
+		this.isRotating = true
+	}
+
+}
+
 TileBeam.prototype.enableBeam = function() {
-	this.uniform.color.value = ACE3.Utils.getVec3Color(0x0000ff);
+	this.uniform.color.value = ACE3.Utils.getVec3Color(0x00ff00);
+	this.beamOn = true
+	this.side = 1
 }
 TileBeam.prototype.disableBeam = function() {
 	this.uniform.color.value = ACE3.Utils.getVec3Color(0xff0000);
+	this.beamOn = false
+	this.side  = -1
 }
-*/
+
 
 
 

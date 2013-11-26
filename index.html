@@ -79,6 +79,36 @@
               }
 
       </script>
+      <script id="beamShader" type="x-shader/x-fragment">
+              uniform vec2 resolution;
+              uniform float time;
+              uniform float dist;
+              uniform float tickness;
+              uniform vec3 color;
+              varying vec2 vUv;
+              //uniform sampler2D texture;
+
+              void main(void) {
+                float cycle = mod((time * 100.0), 1000.0) / 1000.0;//number between 0 and 1 , cyclical in theory
+                float opacity = 1.0;
+                vec3 c = color;
+                vec2 p = -1.0 + 2.0 * vUv; // coords with 0,0 in the middle of the material (limits -1 and 1)
+                // function to simulate a beam
+                float max = sin(cycle * 2.0 * 3.1416);
+                if (abs(p.x) < max && abs(p.y) < max) {
+                  opacity = .3;
+                  gl_FragColor = vec4(c, opacity);                  
+                } else {
+                  opacity = 0.0;
+                  gl_FragColor = vec4(vec3(1.0, 1.0, 1.0), opacity);
+                }     
+                // if (opacity > 1.0) {
+                //   opacity = 1.0;
+                // }
+
+
+              }
+      </script>
 
 </head>
 <body>

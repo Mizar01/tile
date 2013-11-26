@@ -27,14 +27,17 @@ TileMapConfig = function() {
     		for (var ri = 0; ri < h; ri++) {
     	    	var value = rows[ri].split(",")[ci]
     	    	if (value != null && value != "") {
-	    	    	var t = new window[this.symbolMap[value]](ci, ri)
-	    	    	if (value == "S") {
-	    	    		this.startTile = t
-	    	    	}else if (value == "E") {
-	    	    		this.endTile = t
-	    	    	}
-	    	    	gameManager.registerActor(t)
-		            this.map[ci][ri] = t
+    	    		var typeName = this.symbolMap[value]
+    	    		if (typeName) { 
+	    	    		var t = new window[typeName](ci, ri)
+		    	    	if (value == "S") {
+		    	    		this.startTile = t
+		    	    	}else if (value == "E") {
+		    	    		this.endTile = t
+		    	    	}
+		    	    	gameManager.registerActor(t)
+			            this.map[ci][ri] = t
+			        }
 		        }
     		}
     	}
@@ -45,18 +48,20 @@ TileMapConfig = function() {
 
 	this.symbolMap =   { "ST": "StartTile", 
 						 "01": "Tile",
-						 "02": "Tile2Go", 
+						 "02": "Tile2Go",
+						 "03": "Tile3Go",
 						 "EN": "EndTile",
 						 "SS": "TileSwitchStatusAround",
+						 //"BE": "TileBeam",
 						}
 
 
     this.mapStrings = {
-    	"test" :     "ST,01,01,01,01,01-" +
-	                 "01,02,01,01,01,01-" +
-	                 "01,01,01,01,02,01-" +
-	                 "01,01,SS,02,01,EN-" +
-	                 "01,01,01,02,01,01-" +
+    	"test" :     "ST,**,01,01,BE,01-" +
+	                 "01,02,01,03,**,01-" +
+	                 "01,01,01,01,**,01-" +
+	                 "01,01,SS,02,**,EN-" +
+	                 "01,03,01,02,BE,01-" +
 	                 "01,01,01,02,01,01-",
 
     }
@@ -166,8 +171,12 @@ BaseTile.prototype.trigger = function() {}
 /**
 * it returns the current side of the tile if it's still , or the 
 * side where the tile will be at the end of the flipping 
+* When a tile is not flipable it returns 0.
 */
 BaseTile.prototype.getFlipSide = function() {
+	if (!this.props.flippable) {
+		return this.side
+	}
 	if (this.isFlipping) {
 		return -1 * this.side
 	}else {
@@ -178,12 +187,12 @@ BaseTile.prototype.getFlipSide = function() {
 /**
 * Basic conditions for flipping, based on some other tile attributes
 */
-BaseTile.prototype.canBeFlipped = function() {
-	var ntm = this.getNearTiles()
-	for (var nti in ntm) {
-		if (ntm[nti].getFlipSide() == 1) {
-			return true
-		}
+BaseTile.prototype.canBeFlipped = function(min, max) {
+	min = min || 1
+	max = max || 8
+	var ntml = this.getNearTiles().length
+	if (ntml >= min && ntml <= max) {
+		return true
 	}
 	return false
 }
@@ -191,10 +200,15 @@ BaseTile.prototype.canBeFlipped = function() {
 /**
 * Get all (max of 4) the adjacent Tiles. If filterEnabled = true (default)
 * the function returns only enabled tiles.
+* The default filtering Side is 1
+* If the side is specified and differs from 0 , i count only the tiles flipped on specified side.
 * default 
+* the side 0 means i'm not interested on what side.
+* filtering Enabled has precedence on filtering Sides.
 */
-BaseTile.prototype.getNearTiles = function(filterEnabled) {
+BaseTile.prototype.getNearTiles = function(filterSide, filterEnabled) {
 	filterEnabled = filterEnabled || true
+	filterSide = filterSide || 1
 	var ntm = []
 	var i = this.mapX
 	var j = this.mapZ
@@ -207,12 +221,18 @@ BaseTile.prototype.getNearTiles = function(filterEnabled) {
 	for (i in pairVer) {
 		// console.log(pairVer[i])
 		var t = tileMapConfig.getTile(pairVer[i][0], pairVer[i][1])
-		if (t != null && t.enabled) {
-			ntm.push(t)
+		if (t != null) {
+			if (!filterEnabled || (filterEnabled && t.enabled)) {
+				if (filterSide == 0 || t.getFlipSide() == filterSide) {
+					ntm.push(t)
+				}
+			}
 		}
 	}
 	return ntm
 }
+
+
 
 BaseTile.prototype.disable = function() {
 	this.hide()
@@ -242,7 +262,6 @@ BaseTile.prototype.toggleStatus = function() {
 
 
 Tile = function(mapX, mapZ, props) {
-
 	BaseTile.call(this, mapX, mapZ, {color: 0x000000, flippable: true, pickable: true});
 }
 
@@ -315,13 +334,16 @@ StartTile = function(mapX, mapZ) {
 }
 StartTile.extends(BaseTile, "StartTile")
 
-StartTile.prototype.defineObj = function() {
+StartTile.prototype.defineObj = function(color, borderColor, shader) {
+	color = color || 0xffff00
+	borderColor = borderColor || 0xff0000
+	shader = shader || "borderShader"
 	this.uniform = ACE3.Utils.getStandardUniform();
 	this.uniform.borderSize = { type: 'f', value: '0.1'};
-	this.uniform.borderColor = {type: 'v3', value: ACE3.Utils.getVec3Color(0xff00000)};
-	this.uniform.color.value = ACE3.Utils.getVec3Color(this.color);
+	this.uniform.borderColor = {type: 'v3', value: ACE3.Utils.getVec3Color(borderColor)};
+	this.uniform.color.value = ACE3.Utils.getVec3Color(color);
 	var g = new THREE.CubeGeometry(this.width, 0.3, this.width)
-	smTemp = ACE3.Utils.getStandardShaderMesh(this.uniform, "generic", "borderShader", g);
+	smTemp = ACE3.Utils.getStandardShaderMesh(this.uniform, "generic", shader, g);
 	var physMesh = Physijs.createMaterial(smTemp.material, 0.4, 0.6);
 	return new Physijs.BoxMesh(g, physMesh, this.mass);	
 }
@@ -336,14 +358,7 @@ EndTile = function(mapX, mapZ) {
 EndTile.extends(BaseTile, "EndTile")
 
 EndTile.prototype.defineObj = function() {
-	this.uniform = ACE3.Utils.getStandardUniform();
-	this.uniform.borderSize = { type: 'f', value: '0.1'};
-	this.uniform.borderColor = {type: 'v3', value: ACE3.Utils.getVec3Color(0x00ff00)};
-	this.uniform.color.value = ACE3.Utils.getVec3Color(this.color);
-	var g = new THREE.CubeGeometry(this.width, 0.3, this.width)
-	smTemp = ACE3.Utils.getStandardShaderMesh(this.uniform, "generic", "borderShader", g);
-	var physMesh = Physijs.createMaterial(smTemp.material, 0.4, 0.6);
-	return new Physijs.BoxMesh(g, physMesh, this.mass);	
+	return StartTile.prototype.defineObj.call(this, 0xffff00, 0x00ff00)
 }
 
 Tile2Go = function(mapX, mapZ) {
@@ -359,18 +374,25 @@ Tile2Go.prototype.defineObj = function() {
 /**
 * Basic conditions for flipping, based on some other tile attributes
 */
-Tile2Go.prototype.canBeFlipped = function() {
-	var ntm = this.getNearTiles()
-	var cnt = 0
-	for (var nti in ntm) {
-		if (ntm[nti].getFlipSide() == 1) {
-			cnt += 1
-		}
-	}
-	if (cnt >= 2) {
-		return true
-	}
-	return false
+Tile2Go.prototype.canBeFlipped = function(min, max) {
+	return BaseTile.prototype.canBeFlipped.call(this, 2)
+}
+
+Tile3Go = function(mapX, mapZ) {
+	BaseTile.call(this, mapX, mapZ, {color: 0xffff00, flippable: true, pickable: true})
+}
+Tile3Go.extends(BaseTile, "Tile3Go")
+
+Tile3Go.prototype.defineObj = function() {
+	return Tile.prototype.defineObj.call(this, 0xff0000, 0xffffff, 0x00ffff, 0x00ffff,
+		"alphaTextureShader", "borderShader", "media/Tile3Go.jpg")
+}
+
+/**
+* Basic conditions for flipping, based on some other tile attributes
+*/
+Tile3Go.prototype.canBeFlipped = function() {
+	return BaseTile.prototype.canBeFlipped.call(this, 3)
 }
 
 /**
@@ -387,8 +409,9 @@ TileSwitchStatusAround = function(mapX, mapZ) {
 TileSwitchStatusAround.extends(BaseTile, "TileSwitchStatusAround")
 
 TileSwitchStatusAround.prototype.defineObj = function() {
-	return Tile.prototype.defineObj.call(this, 0xffff00, 0xffffff, 0x00ffff, 0x00ffff,
-		"alphaTextureShader", "alphaTextureShader", "media/Tile2Go.jpg", "media/Tile2Go.jpg")
+	return Tile.prototype.defineObj.call(this, 0x000000, 0xffffff, 0x00ffff, 0x00ffff,
+		"alphaTextureShader", "alphaTextureShader", "media/TileSwitchStatusAround.jpg", 
+		"media/TileSwitchStatusAround.jpg")
 }
 
 TileSwitchStatusAround.prototype.trigger = function() {
@@ -397,6 +420,45 @@ TileSwitchStatusAround.prototype.trigger = function() {
 		ntm[nti].toggleStatus()
 	}	
 }
+
+/*
+TileBeam = function(mapX, mapZ) {
+	BaseTile.call(this, mapX, mapZ, { flippable: false, pickable: true})
+	this.orient = 0
+	this.beamOn = false 
+}
+TileBeam.extends(BaseTile, "TileBeam")
+TileBeam.prototype.defineObj = function() {
+	to = StartTile.prototype.defineObj.call(this, 0xff0000, 0xffffff) 
+	to.add(ACE3.Builder.cube(1, 0xff00ff))
+	return to
+}
+TileBeam.prototype.action = function() {
+	this.orient = (this.orient + 1) % 4
+	this.obj.rotation.y = Math.PI * this.orient
+	this.obj.__dirtyRotation = true
+}
+TileBeam.prototype.run = function() {
+	var cntTiles = this.getNearTiles()
+	if (cntTiles >= 1 && this.beamOn == false) {
+		this.enableBeam()
+	}else if (cntTiles >= 1 && this.beamOn == true) {
+		this.disableBeam()
+	}
+}
+TileBeam.prototype.enableBeam = function() {
+	this.uniform.color.value = ACE3.Utils.getVec3Color(0x0000ff);
+}
+TileBeam.prototype.disableBeam = function() {
+	this.uniform.color.value = ACE3.Utils.getVec3Color(0xff0000);
+}
+*/
+
+
+
+
+
+
 
 
 

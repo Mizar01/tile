@@ -1,72 +1,3 @@
-TilesConfig = {
-	"size" : 3,
-	"distance": 3.2,
-}
-
-TileMapConfig = function() {
-	this.map = []
-	this.startTile = null
-	this.endTile = null
-	this.getTile = function(mapx, mapz) {
-        if (this.map[mapx] != null && this.map[mapx][mapz] != null) {
-        	//console.log(this.map[mapx][mapz])
-            return this.map[mapx][mapz]
-        }
-        return null
-    }
-    this.loadMap = function (mapName) {
-    	this.map = []
-    	var ms = this.mapStrings[mapName]
-    	var rows = ms.split("-")
-    	//detect h, w
-    	var h = rows.length
-    	var w = rows[0].split(",").length
-    	for (var ci = 0; ci < w; ci++) {
-    		this.map[ci] = []
-    		//var vals = rows[ri].split(",")
-    		for (var ri = 0; ri < h; ri++) {
-    	    	var value = rows[ri].split(",")[ci]
-    	    	if (value != null && value != "") {
-    	    		var typeName = this.symbolMap[value]
-    	    		if (typeName) { 
-	    	    		var t = new window[typeName](ci, ri)
-		    	    	if (value == "S") {
-		    	    		this.startTile = t
-		    	    	}else if (value == "E") {
-		    	    		this.endTile = t
-		    	    	}
-		    	    	gameManager.registerActor(t)
-			            this.map[ci][ri] = t
-			        }
-		        }
-    		}
-    	}
-
-
-
-    }
-
-	this.symbolMap =   { "ST": "StartTile", 
-						 "01": "Tile",
-						 "02": "Tile2Go",
-						 "03": "Tile3Go",
-						 "EN": "EndTile",
-						 "SS": "TileSwitchStatusAround",
-						 "BE": "TileBeam",
-						}
-
-
-    this.mapStrings = {
-    	"test" :     "ST,**,01,01,BE,01-" +
-	                 "BE,02,01,03,**,01-" +
-	                 "01,01,01,01,**,01-" +
-	                 "01,01,SS,02,**,EN-" +
-	                 "01,03,01,02,BE,01-" +
-	                 "01,01,01,02,01,01-",
-
-    }
-}
-
 BaseTile = function(mapX, mapZ, props) {
 	ACE3.Actor3D.call(this);
 	this.props = props || {}
@@ -429,6 +360,9 @@ TileBeam = function(mapX, mapZ) {
 	this.beamOn = false 
 	this.isRotating = false
 	this.side =  -1
+	this.pairKey = -1
+
+	this.rotSpeed = 0.1
 }
 TileBeam.extends(BaseTile, "TileBeam")
 TileBeam.prototype.defineObj = function() {
@@ -437,17 +371,19 @@ TileBeam.prototype.defineObj = function() {
     this.towerObj.position.y = 0.5
     to.add(this.towerObj)
     this.beamObj = this.defineBeamObj()
-    this.beamObj.position.x  = 5
+    //this.beamObj.rotation.z = Math.PI/2
+    this.beamObj.position.x  = 4
+    this.beamObj.rotation.x = - Math.PI/2
     this.towerObj.add(this.beamObj)
 	return to
 }
 
 TileBeam.prototype.defineBeamObj = function() {
 	color = 0xffff00
-	shader = "beamShader"
+	shader = "beamShader2"
 	this.beamUniform = ACE3.Utils.getStandardUniform();
 	this.beamUniform.color.value = ACE3.Utils.getVec3Color(color);
-	var g = new THREE.CubeGeometry(10, 0.1, 0.1)
+	var g = new THREE.PlaneGeometry(8, 5)
 	var mesh = ACE3.Utils.getStandardShaderMesh(this.beamUniform, "generic", shader, g)
 	mesh.material.transparent = true
 	return mesh
@@ -462,16 +398,17 @@ TileBeam.prototype.action = function() {
 }
 TileBeam.prototype.run = function() {
 	var cntTiles = this.getNearTiles().length
-	if (cntTiles >= 1 && !this.beamOn) {
+	var paired = this.isPaired()
+	if ((cntTiles >= 1 || paired)  && !this.beamOn) {
 		this.enableBeam()
-	}else if (cntTiles < 1 && this.beamOn) {
+	}else if ((cntTiles < 1 && !paired) && this.beamOn) {
 		this.disableBeam()
 	}
 
 	if (this.orient != this.targetOrient) {
 		this.rotateToTargetOrientation()
 	}
-	this.uniform.time.value = ace3.time.frameTime
+	this.beamUniform.time.value = ace3.time.frameTime
 }
 
 TileBeam.prototype.rotateToTargetOrientation = function() {
@@ -487,7 +424,7 @@ TileBeam.prototype.rotateToTargetOrientation = function() {
 		}
 		this.isRotating = false
 	} else {
-		this.towerObj.rotation.y += 0.01
+		this.towerObj.rotation.y += this.rotSpeed
 		this.isRotating = true
 	}
 
@@ -502,6 +439,35 @@ TileBeam.prototype.disableBeam = function() {
 	this.uniform.color.value = ACE3.Utils.getVec3Color(0xff0000);
 	this.beamOn = false
 	this.side  = -1
+}
+
+TileBeam.prototype.getPairedTile = function() {
+	var pair = tileMapConfig.pairedBeams[this.pairKey]
+	if (pair[0].getId() == this.getId()) {
+		return pair[1]
+	}else {
+		return pair[0]
+	}
+}
+
+TileBeam.prototype.isPaired = function() {
+	var pt = this.getPairedTile()
+	// 0 = east , 1 = north, 2 = west, 3 = south
+	var opair = pt.orient
+	var px = pt.mapX
+	var pz = pt.mapZ
+	var x = this.mapX
+	var z = this.mapZ
+	if (px < x) {
+		return opair == 0
+	}else if (px > x){
+		return opair == 2
+	}else if (pz < z) {
+		return opair == 3
+	}else {
+		return 2
+	}
+
 }
 
 

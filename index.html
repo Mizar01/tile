@@ -18,6 +18,7 @@
 
       <script src="ace3/lib/js/postprocessing/MaskPass.js"></script>
       <script src="ace3/ace3_standalone_alpha.57.js"></script>
+      <script src="game/tile_utils.js"></script>
       <script src="game/actors/tiles.js"></script>
       <script src="game/managers.js"></script>
       <script src="game/logics/misc_logics.js"></script>
@@ -94,8 +95,8 @@
                 vec3 c = color;
                 vec2 p = -1.0 + 2.0 * vUv; // coords with 0,0 in the middle of the material (limits -1 and 1)
                 // function to simulate a beam
-                float max = sin(cycle * 2.0 * 3.1416);
-                if (abs(p.x) < max && abs(p.y) < max) {
+                float max = sin(p.y * 2.0 * 3.1416 + cycle);
+                if (abs(p.x) < max) {
                   opacity = .3;
                   gl_FragColor = vec4(c, opacity);                  
                 } else {
@@ -107,6 +108,30 @@
                 // }
 
 
+              }
+      </script>
+
+      <script id="beamShader2" type="x-shader/x-fragment">
+              #ifdef GL_ES
+              precision mediump float;
+              #endif
+
+              uniform float time;
+              uniform vec2 resolution;
+              uniform vec3 color;
+              varying vec2 vUv;
+
+
+              void main( void ) {
+
+                vec2 p = -1.0 + 2.0 * vUv; // coords with 0,0 in the middle of the material (limits -1 and 1)
+                float s = sin(time*2.951) / 0.5;
+                float dy = 0.4 / ( 3. * abs(sin(p.y)*s) );
+                if (abs(p.y)<.1) {
+                  gl_FragColor = vec4( dy * 0.1 * dy, 0.5 * dy, dy, 0.7); 
+                }else {
+                  gl_FragColor = vec4( .0, .0, .0, 0.0);
+                }
               }
       </script>
 

@@ -136,6 +136,15 @@ GameUtils = {
         } 
         return false
     },
+    actorInArray: function(actor, actorArray) {
+        for (var i in actorArray) {
+            var ca = actorArray[i]
+            if (ca.getId() == actor.getId()) {
+                return true
+            }
+        }
+        return false
+    },
 }
 
 

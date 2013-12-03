@@ -354,17 +354,23 @@ TileSwitchStatusAround.prototype.trigger = function() {
 
 
 TileBeam = function(mapX, mapZ) {
-	BaseTile.call(this, mapX, mapZ, { flippable: false, pickable: true})
+
+	//Properties defined before calling base constructor.
+	this.maxFarCells = 10 //the maximum extenc in cell units of a laser beam
 	this.orient = 0
+
+	BaseTile.call(this, mapX, mapZ, { flippable: false, pickable: true})
+
 	this.targetOrient = 0
 	this.beamOn = false 
 	this.isRotating = false
 	this.side =  -1
 	this.pairKey = -1
-
 	this.rotSpeed = 0.1
+	this.enablingTileBeams = []
 }
 TileBeam.extends(BaseTile, "TileBeam")
+
 TileBeam.prototype.defineObj = function() {
 	to = StartTile.prototype.defineObj.call(this, 0xff0000, 0xffffff) 
     this.towerObj = ACE3.Builder.cylinder(0.4, 1, 0x000000, 1)
@@ -372,9 +378,10 @@ TileBeam.prototype.defineObj = function() {
     to.add(this.towerObj)
     this.beamObj = this.defineBeamObj()
     //this.beamObj.rotation.z = Math.PI/2
-    this.beamObj.position.x  = 4
     this.beamObj.rotation.x = - Math.PI/2
+    this.rebuildBeam()
     this.towerObj.add(this.beamObj)
+
 	return to
 }
 
@@ -383,7 +390,8 @@ TileBeam.prototype.defineBeamObj = function() {
 	shader = "beamShader2"
 	this.beamUniform = ACE3.Utils.getStandardUniform();
 	this.beamUniform.color.value = ACE3.Utils.getVec3Color(color);
-	var g = new THREE.PlaneGeometry(8, 5)
+	this.beamLength = 1
+	var g = new THREE.PlaneGeometry(this.beamLength, 3)
 	var mesh = ACE3.Utils.getStandardShaderMesh(this.beamUniform, "generic", shader, g)
 	mesh.material.transparent = true
 	return mesh
@@ -397,8 +405,13 @@ TileBeam.prototype.action = function() {
 	}
 }
 TileBeam.prototype.run = function() {
+	if (this.beamOn && !this.isRotating) {
+		this.beamObj.visible = true
+	} else {
+		this.beamObj.visible = false // when rotating or off the beam is invisible.
+	}
 	var cntTiles = this.getNearTiles().length
-	var paired = this.isPaired()
+	var paired = this.isPairedWithEnablingTiles()
 	if ((cntTiles >= 1 || paired)  && !this.beamOn) {
 		this.enableBeam()
 	}else if ((cntTiles < 1 && !paired) && this.beamOn) {
@@ -423,6 +436,7 @@ TileBeam.prototype.rotateToTargetOrientation = function() {
 			this.towerObj.rotation.y = 0
 		}
 		this.isRotating = false
+		this.rebuildBeam()
 	} else {
 		this.towerObj.rotation.y += this.rotSpeed
 		this.isRotating = true
@@ -430,10 +444,48 @@ TileBeam.prototype.rotateToTargetOrientation = function() {
 
 }
 
-TileBeam.prototype.enableBeam = function() {
+TileBeam.prototype.rebuildBeam = function() {
+	var x = this.mapX
+	var z = this.mapZ
+	var cells = this.maxFarCells
+	for (var i = 0; i < this.maxFarCells; i++) {
+		if (this.orient == 0) x = x + 1
+		else if (this.orient == 2) x = x - 1
+		else if (this.orient == 1) z = z - 1
+		else if (this.orient == 3) z = z + 1
+		var c = tileMapConfig.getTile(x, z)
+		if (c != null && (c.getType() == "TileBlock" || c.getType() == "TileBeam")) {
+			if (c.getType() == "TileBeam") {
+				c.enableBeam(this)
+			}
+			cells = i
+			break
+		}
+	}
+	this.beamLength = TilesConfig.size * (cells + 1)
+	this.beamObj.scale.x = this.beamLength
+	this.beamObj.position.x  = this.beamLength / 2
+}
+
+/**
+* Enable THIS tilebeam , eventually registering the enabling tile (the enabler) in the 
+* enabling array.
+*/ 
+TileBeam.prototype.enableBeam = function(enablingTileBeam) {
+	// To avoid race condition with rebuildBeam i must return 
+	// when i find an enabler i already found.
+	if (enablingTileBeam) {
+		if (!GameUtils.actorInArray(enablingTileBeam, this.enablingTileBeams)) {
+			this.enablingTileBeams.push(enablingTileBeam)		
+		}else {
+			return
+		}
+	}
 	this.uniform.color.value = ACE3.Utils.getVec3Color(0x00ff00);
 	this.beamOn = true
 	this.side = 1
+    //TODO : Avoid race condition with rebuildBeam
+	this.rebuildBeam()
 }
 TileBeam.prototype.disableBeam = function() {
 	this.uniform.color.value = ACE3.Utils.getVec3Color(0xff0000);
@@ -450,24 +502,60 @@ TileBeam.prototype.getPairedTile = function() {
 	}
 }
 
-TileBeam.prototype.isPaired = function() {
-	var pt = this.getPairedTile()
-	// 0 = east , 1 = north, 2 = west, 3 = south
-	var opair = pt.orient
-	var px = pt.mapX
-	var pz = pt.mapZ
+/**
+* It returns true if at least one ot the tiles in enablingTileBeams is 
+* enabling this one. At the same time the tiles that does not enable anymore this tile
+* will be stripped out from the enablingTileBeams array.
+*/
+TileBeam.prototype.isPairedWithEnablingTiles = function() {
+	var newEnablingArray = []
+
+	var atLeastOneEnable = false
+
+	for (var i = 0; i < this.enablingTileBeams.length; i++) {
+		var et = this.enablingTileBeams[i]
+		if (et.isEnabling(this)) {
+			atLeastOneEnable = true
+			newEnablingArray.push(et)
+			//console.log("added " + et.getType() + "[" + et.mapX + "," + et.mapZ + "]" )
+		}
+	}
+	this.enablingTileBeams = newEnablingArray
+	return atLeastOneEnable
+
+}
+
+/**
+* Scan in the orientation of the beam if the given targetBeam is beeing enabled
+* currently and the beam isn't blocked by something else.
+*/
+TileBeam.prototype.isEnabling = function(targetBeam) {
+	if (!this.beamOn) {
+		return false
+	}
 	var x = this.mapX
 	var z = this.mapZ
-	if (px < x) {
-		return opair == 0
-	}else if (px > x){
-		return opair == 2
-	}else if (pz < z) {
-		return opair == 3
-	}else {
-		return 2
+	//assume the max distance between the tiles
+	var dist = Math.max(Math.abs(targetBeam.mapX - this.mapX), Math.abs(targetBeam.mapZ - this.mapZ))
+	for (var i = 0; i < dist + 1; i++) {
+		if (this.orient == 0) x = x + 1
+		else if (this.orient == 2) x = x - 1
+		else if (this.orient == 1) z = z - 1
+		else if (this.orient == 3) z = z + 1
+		var c = tileMapConfig.getTile(x, z)
+		if (c != null) {
+			 var isTileBeam = (c.getType() == "TileBeam")
+			 var isBlockTile = (c.getType() == "TileBlock")
+			 if (isBlockTile) {
+			 	return false
+			 }else if (isTileBeam && c.getId() != targetBeam.getId()) {
+			 	return false
+			 }else if (isTileBeam && c.getId() == targetBeam.getId()) {
+			 	return true
+			 }
+		}
 	}
-
+	return false
 }
 
 

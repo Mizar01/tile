@@ -30,12 +30,6 @@ BaseTile = function(mapX, mapZ, props) {
 	this.side = -1
 
 	this.enabled = true
-
-
-
-
-
-
 }
 
 BaseTile.extends(ACE3.Actor3D, "BaseTile");
@@ -365,9 +359,8 @@ TileBeam = function(mapX, mapZ) {
 	this.beamOn = false 
 	this.isRotating = false
 	this.side =  -1
-	this.pairKey = -1
 	this.rotSpeed = 0.1
-	this.enablingTileBeams = []
+
 }
 TileBeam.extends(BaseTile, "TileBeam")
 
@@ -407,15 +400,15 @@ TileBeam.prototype.action = function() {
 TileBeam.prototype.run = function() {
 	if (this.beamOn && !this.isRotating) {
 		this.beamObj.visible = true
+		this.checkEnabledTiles()  
 	} else {
 		this.beamObj.visible = false // when rotating or off the beam is invisible.
 	}
 	var cntTiles = this.getNearTiles().length
-	var paired = this.isPairedWithEnablingTiles()
-	if ((cntTiles >= 1 || paired)  && !this.beamOn) {
-		this.enableBeam()
-	}else if ((cntTiles < 1 && !paired) && this.beamOn) {
-		this.disableBeam()
+	//var dynamicEnabled = this.findEnabler()
+	//Enabling by dynamicTiles like TileBeams will be done by an optimized logic.
+	if (cntTiles >= 1) {
+		tileEnablerManager.addEnablingCondition(this)
 	}
 
 	if (this.orient != this.targetOrient) {
@@ -423,6 +416,29 @@ TileBeam.prototype.run = function() {
 	}
 	this.beamUniform.time.value = ace3.time.frameTime
 }
+
+TileBeam.prototype.checkEnabledTiles = function() {
+	var x = this.mapX
+	var z = this.mapZ
+	var cells = this.maxFarCells
+	for (var i = 0; i < this.maxFarCells; i++) {
+		if (this.orient == 0) x = x + 1
+		else if (this.orient == 2) x = x - 1
+		else if (this.orient == 1) z = z - 1
+		else if (this.orient == 3) z = z + 1
+		var c = tileMapConfig.getTile(x, z)
+		if (c != null && c.getType() == "TileBlock") {
+			return 
+		}else if (c!= null && GameUtils.valueInList(c.getType(), TilesConfig.activableTypes)) {
+			//console.log(c)
+			tileEnablerManager.addEnablingCondition(c)
+			return
+		}
+	}
+
+}
+
+
 
 TileBeam.prototype.rotateToTargetOrientation = function() {
 	var tAngle = Math.PI / 2 * this.targetOrient
@@ -454,10 +470,7 @@ TileBeam.prototype.rebuildBeam = function() {
 		else if (this.orient == 1) z = z - 1
 		else if (this.orient == 3) z = z + 1
 		var c = tileMapConfig.getTile(x, z)
-		if (c != null && (c.getType() == "TileBlock" || c.getType() == "TileBeam")) {
-			if (c.getType() == "TileBeam") {
-				c.enableBeam(this)
-			}
+		if (c != null && GameUtils.valueInList(c.getType(), TilesConfig.blockingProjectileTypes)) {
 			cells = i
 			break
 		}
@@ -472,19 +485,9 @@ TileBeam.prototype.rebuildBeam = function() {
 * enabling array.
 */ 
 TileBeam.prototype.enableBeam = function(enablingTileBeam) {
-	// To avoid race condition with rebuildBeam i must return 
-	// when i find an enabler i already found.
-	if (enablingTileBeam) {
-		if (!GameUtils.actorInArray(enablingTileBeam, this.enablingTileBeams)) {
-			this.enablingTileBeams.push(enablingTileBeam)		
-		}else {
-			return
-		}
-	}
 	this.uniform.color.value = ACE3.Utils.getVec3Color(0x00ff00);
 	this.beamOn = true
 	this.side = 1
-    //TODO : Avoid race condition with rebuildBeam
 	this.rebuildBeam()
 }
 TileBeam.prototype.disableBeam = function() {
@@ -493,71 +496,54 @@ TileBeam.prototype.disableBeam = function() {
 	this.side  = -1
 }
 
-TileBeam.prototype.getPairedTile = function() {
-	var pair = tileMapConfig.pairedBeams[this.pairKey]
-	if (pair[0].getId() == this.getId()) {
-		return pair[1]
-	}else {
-		return pair[0]
-	}
-}
-
-/**
-* It returns true if at least one ot the tiles in enablingTileBeams is 
-* enabling this one. At the same time the tiles that does not enable anymore this tile
-* will be stripped out from the enablingTileBeams array.
-*/
-TileBeam.prototype.isPairedWithEnablingTiles = function() {
-	var newEnablingArray = []
-
-	var atLeastOneEnable = false
-
-	for (var i = 0; i < this.enablingTileBeams.length; i++) {
-		var et = this.enablingTileBeams[i]
-		if (et.isEnabling(this)) {
-			atLeastOneEnable = true
-			newEnablingArray.push(et)
-			//console.log("added " + et.getType() + "[" + et.mapX + "," + et.mapZ + "]" )
-		}
-	}
-	this.enablingTileBeams = newEnablingArray
-	return atLeastOneEnable
-
-}
-
-/**
-* Scan in the orientation of the beam if the given targetBeam is beeing enabled
-* currently and the beam isn't blocked by something else.
-*/
-TileBeam.prototype.isEnabling = function(targetBeam) {
+TileBeam.prototype.enableTile = function() {
 	if (!this.beamOn) {
-		return false
+		this.enableBeam()
 	}
-	var x = this.mapX
-	var z = this.mapZ
-	//assume the max distance between the tiles
-	var dist = Math.max(Math.abs(targetBeam.mapX - this.mapX), Math.abs(targetBeam.mapZ - this.mapZ))
-	for (var i = 0; i < dist + 1; i++) {
-		if (this.orient == 0) x = x + 1
-		else if (this.orient == 2) x = x - 1
-		else if (this.orient == 1) z = z - 1
-		else if (this.orient == 3) z = z + 1
-		var c = tileMapConfig.getTile(x, z)
-		if (c != null) {
-			 var isTileBeam = (c.getType() == "TileBeam")
-			 var isBlockTile = (c.getType() == "TileBlock")
-			 if (isBlockTile) {
-			 	return false
-			 }else if (isTileBeam && c.getId() != targetBeam.getId()) {
-			 	return false
-			 }else if (isTileBeam && c.getId() == targetBeam.getId()) {
-			 	return true
-			 }
-		}
-	}
-	return false
 }
 
+TileBeam.prototype.disableTile = function() {
+	if (this.beamOn) {
+		this.disableBeam()
+	}
+}
+
+
+/**
+* The TileBeamReceptor should activate only with a TileBeam pointing at it without
+* any obstacles
+*/
+TileBeamReceptor = function(mapX, mapZ) {
+	BaseTile.call(this, mapX, mapZ, { flippable: false, pickable: false})
+	this.receptorOn = false 
+	this.side =  -1
+
+}
+TileBeamReceptor.extends(BaseTile, "TileBeamReceptor")
+
+TileBeamReceptor.prototype.defineObj = function() {
+	to = StartTile.prototype.defineObj.call(this, 0xff0000, 0xffffff) 
+    this.towerObj = ACE3.Builder.cylinder(0.4, 1, 0x000000, 1)
+    this.towerObj.position.y = 0.5
+    to.add(this.towerObj)
+	return to
+}
+
+TileBeamReceptor.prototype.enableTile = function() {
+	if (!this.receptorOn) {
+		this.uniform.color.value = ACE3.Utils.getVec3Color(0x00ff00);
+		this.receptorOn = true
+		this.side = 1
+	}
+}
+
+TileBeamReceptor.prototype.disableTile = function() {
+	if (this.receptorOn) {
+		this.uniform.color.value = ACE3.Utils.getVec3Color(0xff0000);
+		this.receptorOn = false
+		this.side  = -1
+	}
+}
 
 
 

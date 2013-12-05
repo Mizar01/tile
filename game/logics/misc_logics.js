@@ -101,6 +101,64 @@ MouseClickTileLogic.prototype.run = function() {
     }
 }
 
+/**
+* Logic that manage and optimize the enabling logic of some dynamic and automatic tiles/components.
+* The logic store an enabledArray of Tiles or components and this is destroyed after beiing processed.
+* The level of enabling is an increasing value from 0 to N  (0 means not to be enabled)
+*/
+TileEnablerLogic = function() {
+    this.enablingConditions = {}
+    this.frameCount = 0
+}
+
+TileEnablerLogic.prototype.registerTile = function(actor) {
+    this.enablingConditions[actor.getId()] = 0
+}
+
+TileEnablerLogic.prototype.run = function() {
+    this.frameCount++
+
+    // console.log(this.frameCount + "RUN")
+    // console.log(this.enablingConditions)
+    for (var i in this.enablingConditions) {
+        var cv = this.enablingConditions[i]
+        var actor = gameManager.findActorById(i)
+        if (cv > 0) {
+            // console.log("enabled " + i)
+            actor.enableTile()
+        }else {
+            // console.log("disabled " + i)
+            actor.disableTile()
+        }
+        //resetting conditions.
+        this.enablingConditions["" + i] = 0
+    }
+    // console.log(this.enablingConditions)
+}
+
+TileEnablerLogic.prototype.addEnablingCondition = function(actor) {
+
+    // console.log(this.frameCount + "AEC")
+    var cv = this.enablingConditions["" + actor.getId()]
+    // console.log("cv " + cv)
+    if (!cv && cv != 0) {
+        return
+    }
+    this.enablingConditions["" + actor.getId()]++
+    // console.log(this.enablingConditions)
+}
+
+// TileEnablerLogic.prototype.removeEnablingCondition = function(actor) {
+//     var cv = this.enabledArray[actor.getId()] || 1
+//     this.enabledArray[actor.getId()] = cv + 1
+// }
+
+TileEnablerLogic.prototype.clean = function() {
+    this.enabledArray = {}
+}
+
+
+
 
 
 

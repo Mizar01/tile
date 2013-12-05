@@ -26,6 +26,8 @@ var nextPlatform = null; // the coming platform
 
 var tileMapConfig = null;
 
+var tileEnablerManager = null;
+
 Physijs.scripts.worker = 'ace3/lib/physijs_worker.js';
 Physijs.scripts.ammo = 'ammo.js';
 
@@ -38,16 +40,21 @@ function game_init() {
     //mainThemeSound = $("#main_theme").get(0)
     //mainThemeSound.play()
     // optimizer = new Optimizer()
+
+
     gameManager = ace3.defaultActorManager
+    tileEnablerManager = new TileEnablerLogic(); //optimizer and essential logic for enabling tiles.
 
     tileMapConfig = new TileMapConfig()
-    tileMapConfig.loadMap("test")
+    tileMapConfig.loadMap("world")
 
     //DISABLE DEFAULT CAMERA BEHAVIOUR
     ace3.camera.control = function() {};
     // gameManager.registerLogic(new EnemyCallLogic(0.5));
     // gameManager.registerLogic(new ESCPauseGameLogic());
     gameManager.registerLogic(new MouseControlLogic());
+
+    gameManager.registerLogic(tileEnablerManager);
 
     //Adjust the pitch of the camera
     camera_reset_position()
@@ -66,8 +73,8 @@ function game_init() {
 function camera_reset_position() {
     ace3.camera.cameraObj.rotation.y = 0
     ace3.camera.cameraObj.rotation.z = 0
-    ace3.camera.cameraObj.rotation.x = - Math.PI/4  
-    ace3.camera.pivot.position.set(13, 20, 28)
+    ace3.camera.cameraObj.rotation.x = - Math.PI/4 
+    ace3.camera.pivot.position.set(13, 40, 28)
     ace3.camera.speed = 0.1
 }
 
@@ -140,6 +147,14 @@ GameUtils = {
         for (var i in actorArray) {
             var ca = actorArray[i]
             if (ca.getId() == actor.getId()) {
+                return true
+            }
+        }
+        return false
+    },
+    valueInList: function(val, list) {
+        for (i in list) {
+            if (list[i] == val) {
                 return true
             }
         }

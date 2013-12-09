@@ -26,68 +26,49 @@ EnemyCallLogic.prototype.run = function() {
 
 MouseControlLogic = function() {
     ACE3.Logic.call(this);
-    this.dragLogic = new MouseDragCameraLogic()
-    this.clickLogic = new MouseClickTileLogic()
+    this.pressedStart = false;
+    this.startMP = {}
+    this.lastMP = ace3.getViewportMousePosition()
+    this.endMP = {}
+    this.zSpeed = 60
+    this.xSpeed = 120
+    this.sensibility = 0.001
+
+
+    this.clickThreshold = 0.03
+
+    // this.dragLogic = new MouseDragCameraLogic()
+    // this.clickLogic = new MouseClickTileLogic()
 }
 
 MouseControlLogic.prototype.run = function() {
-    if (!this.dragLogic.isDragging) {
-        this.clickLogic.run()
-    }
-    this.dragLogic.run()
-}
+    //if (!this.dragLogic.isDragging) {
+    //    this.clickLogic.run()
+    //}
+    //this.dragLogic.run()
+    var cmp = ace3.getViewportMousePosition()
 
-//sub logics about dragging
-MouseDragCameraLogic = function() {
-    this.phase = "released"  //released, pressed
-    this.lastMousePos = ace3.getViewportMousePosition()
-    this.zSpeed = 3
-    this.xSpeed = 6
-    this.sensibility = 0.002
-    this.isDragging = false
-}
-
-
-MouseDragCameraLogic.prototype.run = function() {
     if (ace3.eventManager.mousePressed()) {
-        var mp = ace3.getViewportMousePosition()
-        if (this.phase == 'released') {
-            this.phase = 'pressed'
-            this.lastMousePos = mp
+        if (!this.pressedStart) {
+            this.pressedStart = true
+            this.startMP = {"x": cmp.x, "y": cmp.y}
+            this.lastMP = {"x": cmp.x, "y": cmp.y}
         }else {
-            var diff = {x: this.lastMousePos.x - mp.x, y: this.lastMousePos.y - mp.y}
-            if (this.isDragging || diff.x >= this.sensibility || diff.y >= this.sensibility) {
-                ace3.camera.pivot.position.x += diff.x * this.xSpeed
-                ace3.camera.pivot.position.z -= diff.y * this.zSpeed
-                this.lastMousePos = mp
-                this.isDragging = true
-            }           
+            var diff = {x: this.lastMP.x - cmp.x, y: this.lastMP.y - cmp.y}
+            if (Math.abs(diff.x) >= this.sensibility || Math.abs(diff.y) >= this.sensibility) {
+                ace3.camera.pivot.position.x += diff.x * this.xSpeed * ace3.camera.speed
+                ace3.camera.pivot.position.z -= diff.y * this.zSpeed * ace3.camera.speed 
+                this.lastMP = cmp
+            }
         }
-    } else {
-        this.phase = "released"
-        this.isDragging = false
-    }
-}
-
-//sub logics about clicking
-MouseClickTileLogic = function() {
-    this.pressPos = null
-    this.clickThreshold = 0.001
-}
-
-MouseClickTileLogic.prototype.run = function() {
-    if (ace3.eventManager.mousePressed()) {
-        this.pressPos = ace3.getViewportMousePosition()
     }
     if (ace3.eventManager.mouseReleased()) {
-        var mp = ace3.getViewportMousePosition()
-        if (Math.abs(mp.x - this.pressPos.x) < this.clickThreshold && 
-            Math.abs(mp.y - this.pressPos.y) < this.clickThreshold) {
-            //I will consider it a click.
+        if (Math.abs(cmp.x - this.startMP.x) < this.clickThreshold && 
+            Math.abs(cmp.y - this.startMP.y) < this.clickThreshold) {
+            //select
             var pm = ace3.pickManager
             pm.pickActor()
             var p = pm.pickedActor
-
             if (p != null) {
                 var pt = p.getType()
                 var pa = p.action
@@ -96,8 +77,7 @@ MouseClickTileLogic.prototype.run = function() {
                 }
             }
         }
-        //anyway i reset everything
-        this.pressPos == null
+        this.pressedStart = false        
     }
 }
 

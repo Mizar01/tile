@@ -24,12 +24,16 @@ var currentPlatform = null; // the platform where the robot resides
 var prevPlatform = null; // the going-away platform
 var nextPlatform = null; // the coming platform 
 
-var tileMapConfig = null;
+var tileMapConfig = null
 
-var tileEnablerManager = null;
+var tileEnablerManager = null
+
+var cameraViewType = 0
 
 Physijs.scripts.worker = 'ace3/lib/physijs_worker.js';
 Physijs.scripts.ammo = 'ammo.js';
+
+
 
 function game_init() {
     ace3 = new ACE3(true, 1000, 500);
@@ -46,7 +50,7 @@ function game_init() {
     tileEnablerManager = new TileEnablerLogic(); //optimizer and essential logic for enabling tiles.
 
     tileMapConfig = new TileMapConfig()
-    tileMapConfig.loadMap("world")
+    tileMapConfig.loadMap("tunnel")
 
     //DISABLE DEFAULT CAMERA BEHAVIOUR
     ace3.camera.control = function() {};
@@ -74,8 +78,27 @@ function camera_reset_position() {
     ace3.camera.cameraObj.rotation.y = 0
     ace3.camera.cameraObj.rotation.z = 0
     ace3.camera.cameraObj.rotation.x = - Math.PI/4 
-    ace3.camera.pivot.position.set(13, 40, 28)
+    var sp = tileMapConfig.startTile.obj.position
+    ace3.camera.pivot.position.set(sp.x, 20, sp.z + 15)
     ace3.camera.speed = 0.1
+}
+
+function game_change_view() {
+    cameraViewType = (cameraViewType +1) % 3;
+    if (cameraViewType == 0) {
+        ace3.camera.pivot.position.y = 15
+        ace3.camera.cameraObj.rotation.x = - Math.PI/4 
+        ace3.camera.speed = 0.1
+    }else if (cameraViewType == 1) {
+        ace3.camera.pivot.position.y = 30
+        ace3.camera.cameraObj.rotation.x = - Math.PI/4 - 0.1 
+        ace3.camera.speed = 0.4
+    }else if (cameraViewType == 2) {
+        ace3.camera.pivot.position.y = 50
+        ace3.camera.cameraObj.rotation.x = - Math.PI/4 - 0.3 
+        ace3.camera.speed = 0.7
+    }
+
 }
 
 

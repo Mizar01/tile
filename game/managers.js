@@ -20,9 +20,11 @@ function defineInGameHUD() {
     //PAUSE TO MENU BUTTON
     _makeHUDButton(2, 2, game_pause, "media/button_builds.png")
     //UPGRADE MENU BUTTON
-    _makeHUDButton(70, 2, game_upgrades, "media/button_builds.png")
+    //_makeHUDButton(70, 2, game_upgrades, "media/button_builds.png")
     //BUILD MENU BUTTON
-    _makeHUDButton(80, 2, game_builds, "media/button_builds.png")
+    //_makeHUDButton(80, 2, game_builds, "media/button_builds.png")
+    //Change View Button
+    _makeHUDButton(2, 90, game_change_view, "media/button_builds.png")
    
 
 }

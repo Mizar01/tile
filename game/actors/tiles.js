@@ -3,6 +3,7 @@ BaseTile = function(mapX, mapZ, props) {
 	this.props = props || {}
 	this.mass = 0;
 	this.width = TilesConfig.size;
+	this.height = this.width/10;
 
 	this.color = this.props.color || 0x000000
 	this.mapX = mapX
@@ -226,7 +227,7 @@ Tile.prototype.defineObj = function(color1, color2, borderColor1, borderColor2, 
 
 
 
-	var g = new THREE.CubeGeometry(this.width, 0.3, this.width)
+	var g = new THREE.CubeGeometry(this.width, this.height, this.width)
 
 	var vertexShader = "generic"
 	// materials
@@ -267,7 +268,7 @@ StartTile.prototype.defineObj = function(color1, color2, shader) {
 	this.uniform.borderSize = { type: 'f', value: '0.1'};
 	this.uniform.borderColor = {type: 'v3', value: ACE3.Utils.getVec3Color(color2)};
 	this.uniform.color.value = ACE3.Utils.getVec3Color(color1);
-	var g = new THREE.CubeGeometry(this.width, 0.3, this.width)
+	var g = new THREE.CubeGeometry(this.width, this.height, this.width)
 	smTemp = ACE3.Utils.getStandardShaderMesh(this.uniform, "generic", shader, g);
 	var physMesh = Physijs.createMaterial(smTemp.material, 0.4, 0.6);
 	return new Physijs.BoxMesh(g, physMesh, this.mass);	
@@ -523,7 +524,7 @@ TileBeamReceptor.extends(BaseTile, "TileBeamReceptor")
 
 TileBeamReceptor.prototype.defineObj = function() {
 	to = StartTile.prototype.defineObj.call(this, 0xff0000, 0xffffff) 
-    this.towerObj = ACE3.Builder.cylinder(0.4, 1, 0x000000, 1)
+    this.towerObj = ACE3.Builder.cube2(1, 0.5, 1, 0x00ff88)
     this.towerObj.position.y = 0.5
     to.add(this.towerObj)
 	return to
@@ -545,22 +546,24 @@ TileBeamReceptor.prototype.disableTile = function() {
 	}
 }
 
+/**
+* The TileBlock is used only to block the way.
+*/
+TileBlock = function(mapX, mapZ) {
+	BaseTile.call(this, mapX, mapZ, { flippable: false, pickable: false})
+	this.side =  -1
 
+}
+TileBlock.extends(BaseTile, "TileBlock")
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+TileBlock.prototype.defineObj = function() {
+	this.height = this.width
+	to = StartTile.prototype.defineObj.call(this, 0x999999, 0x000000)
+	//var scaleY = this.width / this.height
+	//to.scale.y = scaleY 
+	to.position.y += this.height / 2
+    //this.blockObj = ACE3.Builder.cube2(s, s, s, 0x010101)
+    //this.blockObj.position.y = s/2
+    //to.add(this.blockObj)
+	return to
+}

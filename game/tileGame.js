@@ -37,7 +37,7 @@ Physijs.scripts.ammo = 'ammo.js';
 
 function game_init() {
     ace3 = new ACE3(true, 1000, 500);
-    ace3.setBGColor(0xffffff);
+    ace3.setBGColor(0x000000);
     ace3.scene.setGravity(new THREE.Vector3( 0, -9.8, 0 )); 
     //ace3.addPostProcessing();
     //ace3.setFog(0.02)
@@ -77,6 +77,8 @@ function game_init() {
 function camera_reset_position() {
     ace3.camera.cameraObj.rotation.y = 0
     ace3.camera.cameraObj.rotation.z = 0
+    // ace3.camera.cameraObj.eulerOrder = "YXZ"
+    // ace3.camera.cameraObj.rotation.y = - Math.PI/4 
     ace3.camera.cameraObj.rotation.x = - Math.PI/4 
     var sp = tileMapConfig.startTile.obj.position
     ace3.camera.pivot.position.set(sp.x, 20, sp.z + 15)

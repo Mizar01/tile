@@ -35,6 +35,14 @@ BaseTile = function(mapX, mapZ, props) {
 
 BaseTile.extends(ACE3.Actor3D, "BaseTile");
 
+BaseTile.prototype.getProperty = function(name) {
+    // TODO : improve with default values for every specific variable.
+    if (name in this.props) {
+        return this.props[name]
+    }else {
+        return false
+    }
+}
 /**
 * Function that must be implemented by inheriting objects
 */
@@ -320,32 +328,32 @@ Tile3Go.prototype.defineObj = function() {
 Tile3Go.prototype.canBeFlipped = function() {
 	return BaseTile.prototype.canBeFlipped.call(this, 3)
 }
-
-/**
-* A tile that act on an every tile adjacent in this way:
-* If the tile is enabled , it will be disabled
-* If the tile is disabled, it will be enabled
-*
-*  This change status (enabled/disabled) and it's NOT like changing sides of tiles.
-*  The side of every changed tile remains always the last set.
-*/
-TileSwitchStatusAround = function(mapX, mapZ) {
-	BaseTile.call(this, mapX, mapZ, { flippable: true, pickable: true})
-}
-TileSwitchStatusAround.extends(BaseTile, "TileSwitchStatusAround")
-
-TileSwitchStatusAround.prototype.defineObj = function() {
-	return Tile.prototype.defineObj.call(this, 0x000000, 0xffffff, 0x00ffff, 0x00ffff,
-		"alphaTextureShader", "alphaTextureShader", "media/TileSwitchStatusAround.jpg", 
-		"media/TileSwitchStatusAround.jpg")
-}
-
-TileSwitchStatusAround.prototype.trigger = function() {
-	var ntm = this.getNearTiles()
-	for (var nti in ntm) {
-		ntm[nti].toggleStatus()
-	}	
-}
+//
+///**
+//* A tile that act on an every tile adjacent in this way:
+//* If the tile is enabled , it will be disabled
+//* If the tile is disabled, it will be enabled
+//*
+//*  This change status (enabled/disabled) and it's NOT like changing sides of tiles.
+//*  The side of every changed tile remains always the last set.
+//*/
+//TileSwitchStatusAround = function(mapX, mapZ) {
+//	BaseTile.call(this, mapX, mapZ, { flippable: true, pickable: true})
+//}
+//TileSwitchStatusAround.extends(BaseTile, "TileSwitchStatusAround")
+//
+//TileSwitchStatusAround.prototype.defineObj = function() {
+//	return Tile.prototype.defineObj.call(this, 0x000000, 0xffffff, 0x00ffff, 0x00ffff,
+//		"alphaTextureShader", "alphaTextureShader", "media/TileSwitchStatusAround.jpg", 
+//		"media/TileSwitchStatusAround.jpg")
+//}
+//
+//TileSwitchStatusAround.prototype.trigger = function() {
+//	var ntm = this.getNearTiles()
+//	for (var nti in ntm) {
+//		ntm[nti].toggleStatus()
+//	}	
+//}
 
 
 TileBeam = function(mapX, mapZ) {
@@ -353,8 +361,9 @@ TileBeam = function(mapX, mapZ) {
 	//Properties defined before calling base constructor.
 	this.maxFarCells = 10 //the maximum extenc in cell units of a laser beam
 	this.orient = 0
+    this.cellBeamDistance = 0
 
-	BaseTile.call(this, mapX, mapZ, { flippable: false, pickable: true})
+	BaseTile.call(this, mapX, mapZ, { flippable: false, pickable: true, blocking: true, })
 
 	this.targetOrient = 0
 	this.beamOn = false 
@@ -428,13 +437,19 @@ TileBeam.prototype.checkEnabledTiles = function() {
 		else if (this.orient == 1) z = z - 1
 		else if (this.orient == 3) z = z + 1
 		var c = tileMapConfig.getTile(x, z)
-		if (c != null && c.getType() == "TileBlock") {
-			return 
-		}else if (c!= null && GameUtils.valueInList(c.getType(), TilesConfig.activableTypes)) {
+        if (c != null && GameUtils.valueInList(c.getType(), TilesConfig.activableTypes)) {
 			//console.log(c)
 			tileEnablerManager.addEnablingCondition(c)
+            if (this.beamCellDistance != i + 1) {
+                this.rebuildBeam(i)
+            }
 			return
-		}
+        }else if (c != null && c.getProperty("blocking")){
+            if (this.beamCellDistance != i + 1) {
+                this.rebuildBeam(i)
+            }
+            return
+        }
 	}
 
 }
@@ -461,25 +476,36 @@ TileBeam.prototype.rotateToTargetOrientation = function() {
 
 }
 
-TileBeam.prototype.rebuildBeam = function() {
+/**
+* Rebuilds the beam with a length given from the number of cells (cells distance)
+* If cells is not given the length is recalculated.
+*
+*/
+TileBeam.prototype.rebuildBeam = function(cells) {
 	var x = this.mapX
 	var z = this.mapZ
-	var cells = this.maxFarCells
-	for (var i = 0; i < this.maxFarCells; i++) {
-		if (this.orient == 0) x = x + 1
-		else if (this.orient == 2) x = x - 1
-		else if (this.orient == 1) z = z - 1
-		else if (this.orient == 3) z = z + 1
-		var c = tileMapConfig.getTile(x, z)
-		if (c != null && GameUtils.valueInList(c.getType(), TilesConfig.blockingProjectileTypes)) {
-			cells = i
-			break
-		}
-	}
+    if (cells == null) {	
+        cells = this.maxFarCells
+        for (var i = 0; i < this.maxFarCells; i++) {
+            if (this.orient == 0) x = x + 1
+            else if (this.orient == 2) x = x - 1
+            else if (this.orient == 1) z = z - 1
+            else if (this.orient == 3) z = z + 1
+            var c = tileMapConfig.getTile(x, z)
+            if (c != null && c.getProperty("blocking")) {
+                cells = i
+                break
+            }
+        }
+    }
+
+    this.cellBeamDistance = cells + 1
 	this.beamLength = TilesConfig.size * (cells + 1)
 	this.beamObj.scale.x = this.beamLength
 	this.beamObj.position.x  = this.beamLength / 2
 }
+
+
 
 /**
 * Enable THIS tilebeam , eventually registering the enabling tile (the enabler) in the 
@@ -515,7 +541,7 @@ TileBeam.prototype.disableTile = function() {
 * any obstacles
 */
 TileBeamReceptor = function(mapX, mapZ) {
-	BaseTile.call(this, mapX, mapZ, { flippable: false, pickable: false})
+	BaseTile.call(this, mapX, mapZ, { flippable: false, pickable: false, blocking: true, })
 	this.receptorOn = false 
 	this.side =  -1
 
@@ -550,7 +576,7 @@ TileBeamReceptor.prototype.disableTile = function() {
 * The TileBlock is used only to block the way.
 */
 TileBlock = function(mapX, mapZ) {
-	BaseTile.call(this, mapX, mapZ, { flippable: false, pickable: false})
+	BaseTile.call(this, mapX, mapZ, { flippable: false, pickable: false, blocking: true, })
 	this.side =  -1
 
 }
@@ -558,7 +584,7 @@ TileBlock.extends(BaseTile, "TileBlock")
 
 TileBlock.prototype.defineObj = function() {
 	this.height = this.width
-	to = StartTile.prototype.defineObj.call(this, 0x999999, 0x000000)
+	to = StartTile.prototype.defineObj.call(this, 0x999999)
 	//var scaleY = this.width / this.height
 	//to.scale.y = scaleY 
 	to.position.y += this.height / 2
@@ -567,3 +593,76 @@ TileBlock.prototype.defineObj = function() {
     //to.add(this.blockObj)
 	return to
 }
+
+TileUnit = function(mapX, mapZ) {
+    this.unitObj = null
+    BaseTile.call(this, mapX, mapZ, {flippable: false, pickable: true, blocking : true, })   
+    this.side = -1
+    this.enemy = true
+    this.energy = 100
+    this.selected = false
+    this.taps = 0
+    var pos = ace3.getFromRatio(10, 80)
+    var size = ace3.getFromRatio(70, 15)
+    this.info = new ACE3.HTMLBox(this.getId(), "Hello, Tap to attack !",
+                    pos.x, pos.y, size.x, size.y, 10)
+    gameManager.registerActor(this.info)
+    this.info.hide()    
+}
+TileUnit.extends(BaseTile, "TileUnit")
+
+TileUnit.prototype.defineObj = function() {
+    to = StartTile.prototype.defineObj.call(this, 0x999999, 0x000001)
+    this.unitObj = ACE3.Builder.cube2(this.width / 2, this.width, this.width / 2, 0xAA0066)
+    this.unitObj.position.y = this.width / 2
+    to.add(this.unitObj)
+    return to
+}
+
+TileUnit.prototype.select = function() {
+    this.taps = 1
+    this.selected = 1
+}
+
+TileUnit.prototype.unselect = function() {
+    this.taps = 0
+    this.selected = false
+    this.info.hide()
+}
+
+TileUnit.prototype.action = function() {
+	if (this.enabled) {
+        if (this.taps == 1) {
+            this.info.show()
+            
+        }else if (this.taps >= 2) {
+            this.info.hide()
+            this.challenge()
+        }
+        this.taps++
+	}
+}
+
+TileUnit.prototype.challenge = function() {
+    // TODO
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

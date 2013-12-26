@@ -1,0 +1,141 @@
+<html>
+    <head>
+        <script src="ace3/lib/jquery-1.8.2.min.js"></script>
+        <script>
+            var map = []
+            var mapw = $("input[name=width]").val()
+            var maph = $("input[name=height]").val()
+            var mapName = $("input[name=map_name]")
+            var size = 30
+            var dist = 4
+            var mediaBase = "./media/"
+            var types = [ {code: "**", color: "white", name: "nothing", image: "icon_void.png"},
+                          {code: "01", color: "grey", name: "tile1go", image: "icon_tile1.png"},
+                          {code: "02", color: "grey", name: "tile2go", image: "icon_tile2.png"},
+                          {code: "03", color: "grey", name: "tile3go", image: "icon_tile3.png"},
+                          {code: "BE", color: "green", name: "tile beam", image: "icon_beam.png"},
+                          {code: "BR", color: "green", name: "beam receiver", image: "icon_receiver.png"},
+                          {code: "XX", color: "black", name: "tile block", image: "icon_block.png"},
+                          {code: "ST", color: "yellow", name: "start tile", image: "icon_start.png"},
+                          {code: "EN", color: "yellow", name: "tile end", image: "icon_end.png"},
+                          ]
+            $(document).ready(function() {
+                      
+                      clearMap();
+                      
+            
+                      
+                      
+                      });
+            function clearMap() {
+                map = []
+                $("#mapContainer").text("")
+                mapw = $("input[name=width]").val()
+                maph = $("input[name=height]").val()
+                for (var i = 0; i < mapw; i++) {
+                    map[i] = []
+                    for (var j = 0; j < maph; j++) {
+                        map[i][j] = createCell(i, j);
+                    }
+                }
+                mapName = $("input[name=map_name]").val()
+            }
+            function createCell(i, j) {
+                var px = i * (size + dist) + dist/2;
+                var py = j * (size + dist) + dist/2;
+                var spanId = "cell_" + i + "_" + j
+                var htext = "<span id='" + spanId + "'></span>"
+                var cssStyle = {
+                    "position": "absolute",
+                    "top": py + "px",
+                    "left": px + "px",
+                    "width": size + "px",
+                    "height": size + "px",
+                    "border": "1px solid red",
+                    "type_index": 0,
+                    "background-repeat": "no-repeat",
+                    "background-size": "" + size + "px " + size + "px",
+                }
+                $("#mapContainer").append(htext)
+                $("#" + spanId).css(cssStyle)
+                $("#" + spanId).addClass("cell")
+           
+                
+                
+                $("#" + spanId).click(function() {
+                    cycleType(this.id)
+                })
+                
+                cycleType(spanId, 0)
+                return spanId
+            }
+            
+            function cycleType(spanId, typeIndex) {
+                var c = $("#" + spanId)
+                var nextIndex = typeIndex
+                if (nextIndex == null) {
+                    nextIndex = (parseInt(c.attr("type_index")) + 1) % types.length
+                }
+                //console.log("spanId=" + spanId + " - nextIndex=" + nextIndex)
+                c.attr("type_index", nextIndex)
+                //c.text(types[nextIndex].code)
+                c.attr("title", types[nextIndex].name)
+                c.css("background-image", "url('" + mediaBase + types[nextIndex].image + "')")
+            }
+            
+            function printMap() {
+                var etext = "'" + mapName + "':\n"
+                for (var i = 0; i < mapw; i++) {
+                    for (var j = 0; j < maph; j++) {
+                        var ti = $("#" + map[j][i]).attr("type_index")
+                        var code = types[ti].code
+                        if (j == 0) {
+                            etext += "'" + code
+                        }else {
+                            etext += "," + code
+                        }
+                    }
+                    if (i == mapw - 1) {
+                        etext += "-', \n"
+                    }else {
+                        etext += "-' + \n"
+                    }
+                }
+                $("#map_text").text(etext)
+                $("#mapExport").show()
+                
+            }
+            
+            
+        </script>
+        
+        <style>
+            /* Prevent text selection */
+            #mapContainer {
+                -moz-user-select: none;
+                -khtml-user-select: none;
+                -webkit-user-select: none;
+                user-select: none;
+            }
+            
+           
+        </style>
+   
+    </head>
+    <body>
+        <div>
+            Width:<input name="width" type="text" value="20"/>
+            Height:<input name="height" type="text" value="20"/>
+            Name:<input name="map_name" type="text" value="map name"/>
+            <input type="button" value="Create" onclick="clearMap();"/>
+            <input type="button" value="Export View" onclick="printMap();"/>
+        </div>
+        <div id="mapContainer" style="position:absolute;z-index: 0; cursor: pointer;">
+        </div>
+        <div id="mapExport"
+             style="background-color: black; color:white; z-index: 10; display: none; position: absolute; border:2px solid blue; padding:20px;">
+            <pre id="map_text"></pre>
+            <span onclick="$('#mapExport').hide();">Close</span>
+        </div>
+    </body>
+</html>

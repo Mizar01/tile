@@ -19,3 +19,4 @@ Game with tiles.
 
 
 
+- in the editor the '+' at the end and the comma ',' 

@@ -8,21 +8,21 @@ ESCPauseGameLogic.prototype.run = function() {
     }		
 }
 
-EnemyCallLogic = function(timeRate) {
-    ACE3.Logic.call(this);
-    this.timeRate = timeRate || 5
-    this.spawnTimer = new ACE3.CooldownTimer(timeRate, true)
-    this.spawnTimer.time = 0.01 //make the first spawn instantly
-    this.enemyArray = ["Bird", "Cube"]
-}
-EnemyCallLogic.prototype.run = function() {
-    var rand = Math.round(Math.random())
-    if (this.spawnTimer.trigger()) {
-        var b = new window[this.enemyArray[rand]]();
-        b.setPickable();
-        gameManager.registerActor(b);
-    } 
-}
+//EnemyCallLogic = function(timeRate) {
+//    ACE3.Logic.call(this);
+//    this.timeRate = timeRate || 5
+//    this.spawnTimer = new ACE3.CooldownTimer(timeRate, true)
+//    this.spawnTimer.time = 0.01 //make the first spawn instantly
+//    this.enemyArray = ["Bird", "Cube"]
+//}
+//EnemyCallLogic.prototype.run = function() {
+//    var rand = Math.round(Math.random())
+//    if (this.spawnTimer.trigger()) {
+//        var b = new window[this.enemyArray[rand]]();
+//        b.setPickable();
+//        gameManager.registerActor(b);
+//    } 
+//}
 
 MouseControlLogic = function() {
     ACE3.Logic.call(this);
@@ -47,6 +47,7 @@ MouseControlLogic.prototype.run = function() {
     //}
     //this.dragLogic.run()
     var cmp = ace3.getViewportMousePosition()
+    var selectedUnit = null
 
     if (ace3.eventManager.mousePressed()) {
         if (!this.pressedStart) {
@@ -65,14 +66,27 @@ MouseControlLogic.prototype.run = function() {
     if (ace3.eventManager.mouseReleased()) {
         if (Math.abs(cmp.x - this.startMP.x) < this.clickThreshold && 
             Math.abs(cmp.y - this.startMP.y) < this.clickThreshold) {
-            //select
+            //select/clic/tap
             var pm = ace3.pickManager
             pm.pickActor()
             var p = pm.pickedActor
             if (p != null) {
                 var pt = p.getType()
-                var pa = p.action
-                if (pa) {
+                //Unselect eventual previous selected tileUnit
+                if (this.selectedUnit != null && this.selectedUnit.getId() != p.getId()) {
+                    this.selectedUnit.unselect()
+                    this.selectedUnit = null
+                }
+                //first selection of a tileUnit
+                if (pt == "TileUnit") {
+                    
+                    if (this.selectedUnit == null) {
+                        this.selectedUnit = p
+                        p.select()
+                    }
+                }
+             
+                if (p.action) {
                     p.action()
                 }
             }

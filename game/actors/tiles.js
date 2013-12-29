@@ -596,23 +596,32 @@ TileBlock.prototype.defineObj = function() {
 
 TileUnit = function(mapX, mapZ) {
     this.unitObj = null
+
+    this.colorAlive = 0x999999
+    this.colorSelected = 0x00BB00
+    this.colorDefeated = 0xEEEEEE
+    this.colorDefault = this.colorAlive
+
     BaseTile.call(this, mapX, mapZ, {flippable: false, pickable: true, blocking : true, })   
     this.side = -1
     this.enemy = true
     this.energy = 100
     this.selected = false
     this.taps = 0
-    var pos = ace3.getFromRatio(10, 80)
-    var size = ace3.getFromRatio(70, 15)
+    var pos = ace3.getFromRatio(80, 80)
+    var size = ace3.getSizeFromRatio(20, 20)
     this.info = new ACE3.HTMLBox(this.getId(), "Hello, Tap to attack !",
                     pos.x, pos.y, size.x, size.y, 10)
     gameManager.registerActor(this.info)
-    this.info.hide()    
+    this.info.hide()
+
+
 }
 TileUnit.extends(BaseTile, "TileUnit")
 
 TileUnit.prototype.defineObj = function() {
-    to = StartTile.prototype.defineObj.call(this, 0x999999, 0x000001)
+ 
+    to = StartTile.prototype.defineObj.call(this, this.colorDefault, 0x000001)
     this.unitObj = ACE3.Builder.cube2(this.width / 2, this.width, this.width / 2, 0xAA0066)
     this.unitObj.position.y = this.width / 2
     to.add(this.unitObj)
@@ -622,30 +631,50 @@ TileUnit.prototype.defineObj = function() {
 TileUnit.prototype.select = function() {
     this.taps = 1
     this.selected = 1
+    this.uniform.color.value = ACE3.Utils.getVec3Color(this.colorSelected);
 }
 
 TileUnit.prototype.unselect = function() {
     this.taps = 0
     this.selected = false
+    this.uniform.color.value = ACE3.Utils.getVec3Color(this.colorDefault);
     this.info.hide()
 }
 
 TileUnit.prototype.action = function() {
 	if (this.enabled) {
-        if (this.taps == 1) {
-            this.info.show()
-            
-        }else if (this.taps >= 2) {
-            this.info.hide()
-            this.challenge()
+        if (this.side == -1) {
+            if (this.taps == 1) {
+                this.info.show()
+                
+            }else if (this.taps >= 2) {
+                this.info.hide()
+                this.challenge()
+            }
+            this.taps++
         }
-        this.taps++
 	}
 }
 
 TileUnit.prototype.challenge = function() {
-    // TODO
+    if (player.energy >= this.energy) {
+        this.destroyUnit()
+    }else {
+        player.getDamage(this)
+    }
 }
+
+TileUnit.prototype.destroyUnit = function() {
+    this.tileObj.remove(this.unitObj)
+    this.side = 1
+    this.colorDefault = this.colorDefeated
+    this.props["blocking"] = false
+    this.unselect()
+}
+
+
+
+
 
 
 

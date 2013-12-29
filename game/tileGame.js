@@ -50,7 +50,7 @@ function game_init() {
     tileEnablerManager = new TileEnablerLogic(); //optimizer and essential logic for enabling tiles.
 
     tileMapConfig = new TileMapConfig()
-    tileMapConfig.loadMap("Curl")
+    tileMapConfig.loadMap("Corona")
 
     player = new Player()
 
@@ -188,3 +188,20 @@ GameUtils = {
         return false
     },
 }
+
+
+/* Add this to ACE3 code */
+ACE3.prototype.getSizeFromRatio = function(percX, percY) {
+    var x = this.vpSize.x/100 * percX
+    var y = this.vpSize.y/100 * percY
+    return new THREE.Vector2(x, y)
+}
+
+
+
+
+
+
+
+
+

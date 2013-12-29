@@ -19,14 +19,26 @@
                           {code: "ST", color: "yellow", name: "start tile", image: "icon_start.png"},
                           {code: "EN", color: "yellow", name: "tile end", image: "icon_end.png"},
                           ]
+        
+            var selectedType = 0
+
             $(document).ready(function() {
                       
+                      buildTools();
                       clearMap();
-                      
-            
-                      
-                      
                       });
+
+            function buildTools() {
+                for (var i = 0; i < types.length; i++) {
+                    var cellId = createCell(i, 0, "tools_cell_" , "tools_cells")
+                    setType(cellId, i) // the type index here is used to classify the cell type of the tool.
+                    /* Method click is overwritten */
+                    $("#" + cellId).unbind("click")
+                    $("#" + cellId).click(function() {
+                        selectedType = $(this).attr("type_index")
+                    })
+                }
+            }       
             function clearMap() {
                 map = []
                 $("#mapContainer").text("")
@@ -36,14 +48,19 @@
                     map[i] = []
                     for (var j = 0; j < maph; j++) {
                         map[i][j] = createCell(i, j);
+                        //console.log("map[" + i + "][" + j +"] = " + map[i][j])
                     }
                 }
                 mapName = $("input[name=map_name]").val()
             }
-            function createCell(i, j) {
+            function createCell(i, j, prefix, containerId) {
+            
+                prefix = prefix || 'cell_'
+                containerId = containerId || 'mapContainer'
+
                 var px = i * (size + dist) + dist/2;
                 var py = j * (size + dist) + dist/2;
-                var spanId = "cell_" + i + "_" + j
+                var spanId = prefix + i + "_" + j
                 var htext = "<span id='" + spanId + "'></span>"
                 var cssStyle = {
                     "position": "absolute",
@@ -52,41 +69,51 @@
                     "width": size + "px",
                     "height": size + "px",
                     "border": "1px solid red",
-                    "type_index": 0,
                     "background-repeat": "no-repeat",
                     "background-size": "" + size + "px " + size + "px",
                 }
-                $("#mapContainer").append(htext)
+                $("#" + containerId).append(htext)
                 $("#" + spanId).css(cssStyle)
                 $("#" + spanId).addClass("cell")
            
                 
                 
                 $("#" + spanId).click(function() {
-                    cycleType(this.id)
+                    //cycleType(this.id)
+                    setType(this.id, selectedType)
                 })
                 
-                cycleType(spanId, 0)
+                //cycleType(spanId, 0)
+                /* Setting the type to the SelectedType from tools (0 at the beginning) */
+                setType(spanId, 0)
                 return spanId
             }
-            
-            function cycleType(spanId, typeIndex) {
+
+            function setType(spanId, typeIndex) {
                 var c = $("#" + spanId)
-                var nextIndex = typeIndex
-                if (nextIndex == null) {
-                    nextIndex = (parseInt(c.attr("type_index")) + 1) % types.length
-                }
-                //console.log("spanId=" + spanId + " - nextIndex=" + nextIndex)
-                c.attr("type_index", nextIndex)
-                //c.text(types[nextIndex].code)
-                c.attr("title", types[nextIndex].name)
-                c.css("background-image", "url('" + mediaBase + types[nextIndex].image + "')")
+                c.attr("type_index", "" + typeIndex)
+                //console.log("spanID = " + spanId + " type = " + typeIndex)
+                c.attr("title", types[typeIndex].name)
+                c.css("background-image", "url('" + mediaBase + types[typeIndex].image + "')")
             }
+            
+            //function cycleType(spanId, typeIndex) {
+            //    var c = $("#" + spanId)
+            //    var nextIndex = typeIndex
+            //    if (nextIndex == null) {
+            //        nextIndex = (parseInt(c.attr("type_index")) + 1) % types.length
+            //    }
+            //    //console.log("spanId=" + spanId + " - nextIndex=" + nextIndex)
+            //    c.attr("type_index", nextIndex)
+            //    //c.text(types[nextIndex].code)
+            //    c.attr("title", types[nextIndex].name)
+            //    c.css("background-image", "url('" + mediaBase + types[nextIndex].image + "')")
+            //}
             
             function printMap() {
                 var etext = "'" + mapName + "':\n"
-                for (var i = 0; i < mapw; i++) {
-                    for (var j = 0; j < maph; j++) {
+                for (var i = 0; i < maph; i++) {
+                    for (var j = 0; j < mapw; j++) {
                         var ti = $("#" + map[j][i]).attr("type_index")
                         var code = types[ti].code
                         if (j == 0) {
@@ -124,13 +151,17 @@
     </head>
     <body>
         <div>
-            Width:<input name="width" type="text" value="20"/>
-            Height:<input name="height" type="text" value="20"/>
-            Name:<input name="map_name" type="text" value="map name"/>
-            <input type="button" value="Create" onclick="clearMap();"/>
-            <input type="button" value="Export View" onclick="printMap();"/>
+            <div>
+                Width:<input name="width" type="text" value="3"/>
+                Height:<input name="height" type="text" value="2"/>
+                Name:<input name="map_name" type="text" value="map name"/>
+                <input type="button" value="Create" onclick="clearMap();"/>
+                <input type="button" value="Export View" onclick="printMap();"/>
+            </div>
+            <div id="tools_cells" style="position:absolute;z-index: 0; cursor: pointer;">
+            </div>
         </div>
-        <div id="mapContainer" style="position:absolute;z-index: 0; cursor: pointer;">
+        <div id="mapContainer" style="position:absolute;z-index: 0; cursor: pointer; top:70px;">
         </div>
         <div id="mapExport"
              style="background-color: black; color:white; z-index: 10; display: none; position: absolute; border:2px solid blue; padding:20px;">

@@ -197,6 +197,15 @@ ACE3.prototype.getSizeFromRatio = function(percX, percY) {
     return new THREE.Vector2(x, y)
 }
 
+/**
+ * Rebuilds the content based on new set properties             
+ */ 
+ACE3.ActorHTML.prototype.updateText = function(text) {
+    $("#" + this.id).html(text)
+    this.label = text
+    this.content = this.buildContent() // this is only to store the new content in the object, not useful right now.
+}
+
 
 
 

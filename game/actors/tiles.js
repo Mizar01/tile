@@ -605,9 +605,11 @@ TileUnit = function(mapX, mapZ) {
     BaseTile.call(this, mapX, mapZ, {flippable: false, pickable: true, blocking : true, })   
     this.side = -1
     this.enemy = true
-    this.energy = 100
     this.selected = false
     this.taps = 0
+
+    this.unitProps = this.buildUnitProps()
+    
     var pos = ace3.getFromRatio(80, 80)
     var size = ace3.getSizeFromRatio(20, 20)
     this.info = new ACE3.HTMLBox(this.getId(), "Hello, Tap to attack !",
@@ -645,24 +647,24 @@ TileUnit.prototype.action = function() {
 	if (this.enabled) {
         if (this.side == -1) {
             if (this.taps == 1) {
+                this.info.updateText(this.buildInfoText());
                 this.info.show()
                 
             }else if (this.taps >= 2) {
-                this.info.hide()
-                this.challenge()
+                //this.info.hide()
+                player.challenge(this)
+                this.info.updateText(this.buildInfoText())
             }
             this.taps++
         }
 	}
 }
 
-TileUnit.prototype.challenge = function() {
-    if (player.energy >= this.energy) {
-        this.destroyUnit()
-    }else {
-        player.getDamage(this)
-    }
+TileUnit.prototype.buildInfoText = function() {
+    return "Energy : " + this.unitProps.energy + "<br/>" + "Tap again to attack"
 }
+
+
 
 TileUnit.prototype.destroyUnit = function() {
     this.tileObj.remove(this.unitObj)
@@ -670,6 +672,27 @@ TileUnit.prototype.destroyUnit = function() {
     this.colorDefault = this.colorDefeated
     this.props["blocking"] = false
     this.unselect()
+}
+
+TileUnit.prototype.buildUnitProps = function(energy, vArray, rArray, miscArray) {
+    v = []
+    v.energy = energy || (50 + Math.round(Math.random() * 200))
+    if (vArray == null) {
+        v.cons = new Array()
+    }else {
+        v.cons = vArray
+    }
+    if (rArray == null) {
+        v.resistant = new Array()
+    }else {
+        v.resistant = rArray
+    }
+    if (miscArray == null) {
+        v.misc = new Array()
+    }else {
+        v.misc = miscArray
+    }
+    return v
 }
 
 

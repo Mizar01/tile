@@ -3,9 +3,9 @@ tile
 
 Game with tiles.
 
-- Make a new version of ace3 based on the modifications added to the end of tileGame.
+* Make a new version of ace3 based on the modifications added to the end of tileGame.
 
-- RE DO !!! All the logic with tileBeams enablers must be revisited and simplified. Is too complicated
+* RE DO !!! All the logic with tileBeams enablers must be revisited and simplified. Is too complicated
   to manage and avoid race condition in this manner.
   The new way should be :
   At every step (run()) TB1 check if there's some TB2 enabled by it.
@@ -19,4 +19,6 @@ Game with tiles.
 
 
 
-- in the editor the '+' at the end and the comma ',' 
+* in the editor the '+' at the end and the comma ','
+
+- the tileUnit is clickable but you should not be able to attack it if there is no connection.

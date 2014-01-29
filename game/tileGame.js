@@ -187,6 +187,19 @@ GameUtils = {
         }
         return false
     },
+    generateUnitName: function() {
+        var nameTypes = ["single", "singleComposite"] //, "doubleOf", "double"]
+        var nameSet = ["Bob"]
+        var rType = ACE3.Utils.arrayRandVal(nameTypes)
+        if (rType == "single") {
+            return  ACE3.Utils.arrayRandVal([ "Alice", "Sharko", "Raxud", "Felix", "Mikil", "Traster", "Cadmon" ])
+        }else if (rType == "singleComposite") {
+            var c1 = [ "Sin", "At", "Kin", "Rat", "Rak", "Malu", "Nor", "Sur", "Ko", "Tra", "it", "Fla", "Kne" ]
+            var c2 = [ "-", "Nu", "", "" ]
+            return ACE3.Utils.arrayRandVal(c1) + ACE3.Utils.arrayRandVal(c2) +
+                      ACE3.Utils.arrayRandVal(c1) + ACE3.Utils.arrayRandVal(c2) + ACE3.Utils.arrayRandVal(c1)
+        }        
+    },
 }
 
 
@@ -204,6 +217,13 @@ ACE3.ActorHTML.prototype.updateText = function(text) {
     $("#" + this.id).html(text)
     this.label = text
     this.content = this.buildContent() // this is only to store the new content in the object, not useful right now.
+}
+
+ACE3.Utils.arrayRandVal = function(arr) {
+    var l = arr.length - 1
+    var rn = parseInt(Math.round(Math.random() * l))
+    //console.log(rn)
+    return arr[rn]
 }
 
 

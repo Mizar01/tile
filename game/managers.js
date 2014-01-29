@@ -15,6 +15,17 @@ function defineInGameHUD() {
         mgr.registerActor(b)
         return b
     }
+    
+    function _makeDisplayValue(ratioX, rationY, img, valueFunction) {
+        var dv = new ACE3.DisplayValue("<img src='" + img + "' style='vertical-align: middle;'/>",
+                                             valueFunction(), ace3.getFromRatio(10, 2))
+        dv.separator = ""
+        dv.baseCss.backgroundColor = "transparent"
+        dv.baseCss.color = "white"
+        dv.valueFunction = valueFunction
+
+        mgr.registerActor(dv)
+    }
 
     //HUD IN GAME ELEMENTS
     //PAUSE TO MENU BUTTON
@@ -25,6 +36,11 @@ function defineInGameHUD() {
     //_makeHUDButton(80, 2, game_builds, "media/button_builds.png")
     //Change View Button
     _makeHUDButton(2, 90, game_change_view, "media/button_builds.png")
+    
+    _makeDisplayValue(5, 2, "media/particle2.png", function(){return player.energy})
+    
+    
+
    
 
 }

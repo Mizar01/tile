@@ -153,6 +153,45 @@ TileEnablerLogic.prototype.clean = function() {
 
 
 
+BonusRandomGenerator = function() {
+    ACE3.Logic.call(this)
+    this.timeRate = 1
+    this.spawnTimer = new ACE3.CooldownTimer(this.timeRate, true)
+    this.spawnTimer.time = 0.01 //make the first spawn instantly
+}
+
+BonusRandomGenerator.prototype.run = function() {
+    if (this.spawnTimer.trigger()) {
+        // choose a random tile on the map
+        var mx = THREE.Math.randInt(0, tileMapConfig.mapSizeX - 1)
+        var mz = THREE.Math.randInt(0, tileMapConfig.mapSizeZ - 1)
+        var t = tileMapConfig.getTile(mx, mz)
+        if (t != null && t.props.pickable) {
+            t.addRandomItem()
+        }
+    }
+}
+
+
+
+
+//EnemyCallLogic = function(timeRate) {
+//    ACE3.Logic.call(this);
+//    this.timeRate = timeRate || 5
+
+//    this.enemyArray = ["Bird", "Cube"]
+//}
+//EnemyCallLogic.prototype.run = function() {
+//    var rand = Math.round(Math.random())
+//    if (this.spawnTimer.trigger()) {
+//        var b = new window[this.enemyArray[rand]]();
+//        b.setPickable();
+//        gameManager.registerActor(b);
+//    } 
+//}
+
+
+
 
 
 

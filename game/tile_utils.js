@@ -4,15 +4,18 @@ TilesConfig = {
 	"activableTypes": [ "TileBeam", "TileBeamReceptor", ],
 	//tiles that block beams or projectiles from proceed further. This does not mean they are stopping
 	//the action to be possibly executed on the incident tile (the blocking one).
-    //"blockingProjectileTypes": ["TileBeam", "TileBeamReceptor", "TileBlock",], 
+    //"blockingProjectileTypes": ["TileBeam", "TileBeamReceptor", "TileBlock",],
+    "bonusTypes": ["life", "energy", "blood", "fear", "shadow", "light"],
 }
 
 
 TileMapConfig = function() {
 	this.map = []
-	this.pairedBeams = {}
+    this.mapSizeX = 0
+    this.mapSizeZ = 0
 	this.startTile = null
 	this.endTile = null
+    
 	this.getTile = function(mapx, mapz) {
         if (this.map[mapx] != null && this.map[mapx][mapz] != null) {
         	//console.log(this.map[mapx][mapz])
@@ -20,9 +23,9 @@ TileMapConfig = function() {
         }
         return null
     }
+    
     this.loadMap = function (mapName) {
     	this.map = []
-    	this.pairedBeams = {}
     	var ms = this.mapStrings[mapName]
     	var rows = ms.split("-")
     	//detect h, w
@@ -56,6 +59,9 @@ TileMapConfig = function() {
 		        }
     		}
     	}
+        this.mapSizeX = this.map.length
+        this.mapSizeZ = this.map[0].length
+        
 
 
 

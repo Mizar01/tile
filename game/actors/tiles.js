@@ -31,6 +31,8 @@ BaseTile = function(mapX, mapZ, props) {
 	this.side = -1
 
 	this.enabled = true
+    
+    this.item = null
 }
 
 BaseTile.extends(ACE3.Actor3D, "BaseTile");
@@ -63,14 +65,16 @@ BaseTile.prototype.runFlipping = function() {
 				this.isFlipping = false
 				this.side = 1
 			}
-		}else if (this.side == 1) {
-			this.obj.rotation.z -= this.flipSpeed
-			if (Math.abs(this.obj.rotation.z) < this.flipSpeed * 1.1) {
-				this.obj.rotation.z = 0
-				this.isFlipping = false
-				this.side = -1
-			}
 		}
+        //NO REVERSE FLIPPING IN THE NEW VERSION
+//        else if (this.side == 1) {
+//			this.obj.rotation.z -= this.flipSpeed
+//			if (Math.abs(this.obj.rotation.z) < this.flipSpeed * 1.1) {
+//				this.obj.rotation.z = 0
+//				this.isFlipping = false
+//				this.side = -1
+//			}
+//		}
 		// console.log("rotating : " + this.obj.rotation.z)
 		this.obj.__dirtyRotation = true
 	}	
@@ -96,6 +100,8 @@ BaseTile.prototype.flip = function() {
 	}
 	return false
 }
+
+
 
 /**
 * Collateral action/trigger used basically if the flip has been succesfully started
@@ -186,6 +192,14 @@ BaseTile.prototype.toggleStatus = function() {
 	}else {
 		this.enable()
 	}
+}
+
+BaseTile.prototype.addRandomItem = function() {
+    var bonusType = ACE3.Utils.arrayRandVal(TilesConfig.bonusTypes)
+    var bonusSize = parseInt(Math.floor(Math.random()) * 10)
+    this.item = new Item(this, bonusType, bonusSize)
+    gameManager.registerActor(this.item)
+ 
 }
 
 

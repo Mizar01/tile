@@ -61,6 +61,7 @@ function game_init() {
     gameManager.registerLogic(new MouseControlLogic());
 
     gameManager.registerLogic(tileEnablerManager);
+    gameManager.registerLogic(new BonusRandomGenerator())
 
     //Adjust the pitch of the camera
     camera_reset_position()

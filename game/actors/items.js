@@ -1,6 +1,6 @@
 Item = function(tile, bonusType, bonusSize) {
     ACE3.Actor3D.call(this)
-    this.obj = ACE3.Builder.cube2(1.5,1.5,1, 0xff00ff)
+    this.obj = ACE3.Builder.cube2(1.5,1.5,0.3, 0xff00ff)
     this.bonusType = bonusType
     this.bonusSize = bonusSize
     this.obj.position = tile.obj.position.clone()

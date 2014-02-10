@@ -8,7 +8,7 @@ var hudManager = null  // in game menu
 var menuManager = null // shortcut to another ActorManager for menus
 var upgradeManager = null //an upgrade menu during game
 var buildManager = null //a build menu during game
-var chooseMapMenuManager = null 
+var chooseMapMenuManager = null
 
 var mainThemeSound = null
 
@@ -27,6 +27,8 @@ var nextPlatform = null; // the coming platform
 var tileMapConfig = null
 
 var tileEnablerManager = null
+
+var unitInfoBox = null
 
 var cameraViewType = 0
 
@@ -189,17 +191,22 @@ GameUtils = {
         return false
     },
     generateUnitName: function() {
-        var nameTypes = ["single", "singleComposite"] //, "doubleOf", "double"]
+        var arv = ACE3.Utils.arrayRandVal
+        var nameTypes = ["single", "singleComposite", "double"] //, "doubleOf", "double"]
         var nameSet = ["Bob"]
-        var rType = ACE3.Utils.arrayRandVal(nameTypes)
+        var singleNames = [ "Alice", "Sharko", "Raxud", "Felix", "Mikil", "Traster", "Cadmon" ]
+        var rType = arv(nameTypes)
         if (rType == "single") {
-            return  ACE3.Utils.arrayRandVal([ "Alice", "Sharko", "Raxud", "Felix", "Mikil", "Traster", "Cadmon" ])
+            return  arv(singleNames)
         }else if (rType == "singleComposite") {
-            var c1 = [ "Sin", "At", "Kin", "Rat", "Rak", "Malu", "Nor", "Sur", "Ko", "Tra", "it", "Fla", "Kne" ]
-            var c2 = [ "-", "Nu", "", "" ]
-            return ACE3.Utils.arrayRandVal(c1) + ACE3.Utils.arrayRandVal(c2) +
-                      ACE3.Utils.arrayRandVal(c1) + ACE3.Utils.arrayRandVal(c2) + ACE3.Utils.arrayRandVal(c1)
-        }        
+            var c1 = [ "Sin", "At", "Kin", "Rat", "Rak", "Malu", "Nor", "Sur", "Ko", "Tra", "it", "Fla", "Kne",
+                       "Kar", "Ott", "Num", "Sta", "Kla", "Nin"]
+            var c2 = [ "-", "Nu", "", "Go", "De", "En", "In", "Alu", "Gre" ]
+            return arv(c1) + arv(c2) +
+                      arv(c1) + arv(c2) + arv(c1)
+        }else if (rType == "double") {
+            return arv(singleNames) + " " + arv(singleNames)
+        }
     },
 }
 

@@ -39,6 +39,12 @@ function defineInGameHUD() {
     
     _makeDisplayValue(5, 2, "media/particle2.png", function(){return player.energy})
     
+    //Info box for tile Units
+    var pos = ace3.getFromRatio(80, 80)
+    var size = ace3.getSizeFromRatio(20, 20)
+    unitInfoBox = new ACE3.HTMLBox(null, "Hello, Tap to attack !", pos.x, pos.y, size.x, size.y, 10)
+    mgr.registerActor(unitInfoBox)
+    unitInfoBox.hide()
     
 
    

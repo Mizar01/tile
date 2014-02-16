@@ -1,6 +1,11 @@
 function Player() {
 
-    this.energy = 1000
+    this.life = 100
+    this.light = 0
+    this.shadow = 4
+    this.blood = 0
+    this.fear = 0
+    
 
     this.getDamage = function(unit) {
         // TODO

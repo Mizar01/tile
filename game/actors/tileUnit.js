@@ -17,19 +17,17 @@ TileUnit = function(mapX, mapZ) {
   
     this.life = 100
     this.defense = []
-    this.defense.light = 100
-    this.defense.shadow = 100
-    this.defense.fear = 100
-    this.defense.blood = 100
-    this.attack = []
-    this.attack.light = 10
-    this.attack.fear = 10
-    this.attack.blood = 10
-    this.attack.shadow = 10 
+    this.defense.light = -1
+    this.defense.shadow = -1
+    this.defense.fear = -1
+    this.defense.blood = -1
+    this.attack = 3
     this.energy = 100
         
     this.specialBehaviour = null // special is a function that only some units have.
     this.specialDescription = null
+    
+    this.randomizeDefense()
 
 
 }
@@ -74,37 +72,64 @@ TileUnit.prototype.action = function() {
 	}
 }
 
+/**
+ * Main alghorithm to determine the probability to win for a player
+ * against this unit.
+ */
+TileUnit.prototype.getChanceToWin = function() {
+    
+    prob = 0
+    
+    // PHASE 1 : calculation based on item comparisons
+    for (var item in this.defense) {
+        var sp = player[item]
+        var su = this.defense[item]
+        if (su != -1) {
+            if (su == 0) {
+                su = 1
+            }
+            var prob = prob + parseInt( sp * 50 / su)
+        }
+    }
+    
+    // PHASE 2 : add a percentage for each flipped tile near the unit
+    // TODO
+    
+    return Math.min(100, prob)
+    
+}
+
 TileUnit.prototype.buildInfoText = function() {
     var br = "<br/>"
     return  "<div style='padding:10px; font-size:0.7em; font-family: Courier;';>" +
                 "<b>" + this.name + "</b><br/>" +
-                "Attack : " + this.buildPropsString(this.attack) + br +
-                "Defense: " + this.buildPropsString(this.defense) + br + 
-                "Life   : " + this.life + br + 
-                "Energy : " + this.energy + br +
+                "ATT " + this.attack + " DEF " + this.buildPropsString(this.defense) + br + 
+                "Life " + this.life + " Energy " + this.energy + br +
+                "Chance to win : " + this.getChanceToWin() + br +
                 "Tap again to attack" +
             "</div>"
 }
 
+
 TileUnit.prototype.buildPropsString = function(props) {
-    return "L" + this.formatPropValue(props.light) + 
-           "S" + this.formatPropValue(props.shadow) + 
-           "B" + this.formatPropValue(props.blood) +
-           "F" + this.formatPropValue(props.fear)
+    return this.formatPropValue("L", props.light) + 
+           this.formatPropValue("S", props.shadow) + 
+           this.formatPropValue("B", props.blood) +
+           this.formatPropValue("F", props.fear)
 }
 
 /**
  * 100 means absolute. So it'll be rendered with a dash '-'
  * Anything else will be padded so to fill 4 columns
  */
-TileUnit.prototype.formatPropValue = function(value) {
-    if (value >= 100) {
-        return " -- "
+TileUnit.prototype.formatPropValue = function(label, value) {
+    if (value == -1) {
+        return " "
     }else {
         if (value < 10) {
-            return "  " + value + " "
+            return label + "  " + value + " "
         }else {
-            return " " + value + " "
+            return label + " " + value + " "
         }
     }
 }
@@ -117,4 +142,11 @@ TileUnit.prototype.destroyUnit = function() {
     this.colorDefault = this.colorDefeated
     this.props["blocking"] = false
     this.unselect()
+}
+
+TileUnit.prototype.randomizeDefense = function() {
+    defItems = ["light", "shadow", "blood", "fear"]
+    for (var i = 0; i < 2; i++) {
+        this.defense[ACE3.Utils.arrayRandVal(defItems)] = THREE.Math.randInt(1, 5)
+    }
 }

@@ -166,7 +166,7 @@ BonusRandomGenerator.prototype.run = function() {
         var mx = THREE.Math.randInt(0, tileMapConfig.mapSizeX - 1)
         var mz = THREE.Math.randInt(0, tileMapConfig.mapSizeZ - 1)
         var t = tileMapConfig.getTile(mx, mz)
-        if (t != null && t.props.pickable && t.item == null) {
+        if (t != null && t.props.pickable && t.item == null && t.props.flippable) {
             if (t.getType() != "TileUnit") {
                 t.addRandomItem()    
             }

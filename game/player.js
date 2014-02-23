@@ -6,27 +6,27 @@ function Player() {
     this.blood = 0
     this.fear = 0
     
+    this.attack = 3
+    
 
     this.getDamage = function(unit) {
-        // TODO
-        var ee = unit.energy
-        var em = unit.misc
-        this.energy -= Math.round(ee / 10)
+        
+        this.life -= unit.attack
+
     }
     
     this.challenge = function(unit) {
-        var treshold = 100
-        if (player.energy >= unit.energy) {
-            treshold = 20
-        }else {
-            treshold = 90
-        }
+        
+        var c = unit.getChanceToWin()
         var r = Math.random() * 100
-        if (r > treshold) {
-            unit.destroyUnit()
+        if (r < c) {
+            unit.getDamage()
         }else {
             this.getDamage(unit)
         }
+        
+        unitInfoBox.updateText(unit.buildInfoText())
+        
     }
 
 }

@@ -15,7 +15,7 @@ TileUnit = function(mapX, mapZ) {
     this.taps = 0
 
   
-    this.life = 100
+    this.life = 10
     this.defense = []
     this.defense.light = -1
     this.defense.shadow = -1
@@ -24,7 +24,7 @@ TileUnit = function(mapX, mapZ) {
     this.attack = 3
     this.energy = 100
         
-    this.specialBehaviour = null // special is a function that only some units have.
+    this.special = null // special is an array of functions that only some units have.
     this.specialDescription = null
     
     this.randomizeDefense()
@@ -148,5 +148,12 @@ TileUnit.prototype.randomizeDefense = function() {
     defItems = ["light", "shadow", "blood", "fear"]
     for (var i = 0; i < 2; i++) {
         this.defense[ACE3.Utils.arrayRandVal(defItems)] = THREE.Math.randInt(1, 5)
+    }
+}
+
+TileUnit.prototype.getDamage = function() {
+    this.life -= player.attack
+    if (this.life <= 0) {
+        this.destroyUnit()
     }
 }

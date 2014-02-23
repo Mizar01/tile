@@ -57,6 +57,7 @@ BaseTile.prototype.run = function() {
 }
 
 BaseTile.prototype.runFlipping = function() {
+    
 	if (this.isFlipping) {
 		if (this.side == -1) {
 			this.obj.rotation.z += this.flipSpeed
@@ -76,20 +77,32 @@ BaseTile.prototype.runFlipping = function() {
 //			}
 //		}
 		// console.log("rotating : " + this.obj.rotation.z)
-		this.obj.__dirtyRotation = true
-	}	
+        
+    	this.obj.__dirtyRotation = true
+	}
+    
+
 }
 
 BaseTile.prototype.action = function() {
-	if (this.enabled) {
+    
+	if (this.enabled && this.side == -1) {
 		var res = this.flip()
 	}
 	if (res) {
 		this.trigger()
 	}
+    if (this.item != null && this.side == 1 && !this.isFlipping) {
+        this.item.pick()
+        this.item = null
+    }   
 }
 
+/**
+ * Put the tile in a flipping status
+ */
 BaseTile.prototype.flip = function() {
+    
 	if (this.props.flippable) {
 		if (!this.isFlipping) {
 			if (this.canBeFlipped()) {
@@ -99,6 +112,7 @@ BaseTile.prototype.flip = function() {
 		}
 	}
 	return false
+
 }
 
 
@@ -195,12 +209,15 @@ BaseTile.prototype.toggleStatus = function() {
 }
 
 BaseTile.prototype.addRandomItem = function() {
+    
     var bonusType = ACE3.Utils.arrayRandVal(TilesConfig.bonusTypes)
-    var bonusSize = parseInt(Math.floor(Math.random()) * 10)
+    var bonusSize = parseInt(Math.floor(Math.random() * 10) + 1)
     this.item = new Item(this, bonusType, bonusSize)
     gameManager.registerActor(this.item)
  
 }
+
+
 
 
 

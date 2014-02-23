@@ -14,6 +14,12 @@ Item.prototype.run = function() {
     this.obj.rotation.y += 0.1
 }
 
+Item.prototype.pick = function() {
+    
+    player[this.bonusType] += this.bonusSize
+    this.setForRemoval()
+}
+
 
 
 

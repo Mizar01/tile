@@ -18,7 +18,7 @@ function defineInGameHUD() {
     
     function _makeDisplayValue(ratioX, rationY, img, valueFunction) {
         var dv = new ACE3.DisplayValue("<img src='" + img + "' style='vertical-align: middle;'/>",
-                                             valueFunction(), ace3.getFromRatio(ratioX, rationY))
+                                             valueFunction(), ace3.getFromRatio(ratioX, rationY), "south")
         dv.separator = ""
         dv.baseCss.backgroundColor = "transparent"
         dv.baseCss.color = "white"
@@ -38,10 +38,10 @@ function defineInGameHUD() {
     _makeHUDButton(2, 90, game_change_view, "media/button_builds.png")
     
     _makeDisplayValue(10, 2, "media/particle2.png", function(){return player.life})
-    _makeDisplayValue(15, 2, "media/particle2.png", function(){return player.light})
-    _makeDisplayValue(20, 2, "media/particle2.png", function(){return player.shadow})
-    _makeDisplayValue(25, 2, "media/particle2.png", function(){return player.fear})
-    _makeDisplayValue(30, 2, "media/particle2.png", function(){return player.blood})
+    _makeDisplayValue(2, 20, "media/hud_light.png", function(){return player.light})
+    _makeDisplayValue(2, 35, "media/hud_shadow.png", function(){return player.shadow})
+    _makeDisplayValue(2, 50, "media/hud_fear.png", function(){return player.fear})
+    _makeDisplayValue(2, 65, "media/hud_blood.png", function(){return player.blood})
     
     //Info box for tile Units
     var pos = ace3.getFromRatio(80, 80)

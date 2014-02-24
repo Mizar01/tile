@@ -6,6 +6,7 @@ TilesConfig = {
 	//the action to be possibly executed on the incident tile (the blocking one).
     //"blockingProjectileTypes": ["TileBeam", "TileBeamReceptor", "TileBlock",],
     "bonusTypes": ["life", "energy", "blood", "fear", "shadow", "light"],
+    "bonusColors": ["lime", "yellow", "red", "gray", "black", "white" ],
 }
 
 
@@ -228,11 +229,17 @@ TileMapConfig = function() {
 'XX,**,**,**,**,TU,01,TU,**,**,**,**,**,**,XX-' + 
 'XX,XX,XX,XX,**,**,ST,**,**,XX,XX,XX,XX,XX,XX-',
 
-
-		
-
-
-
+'Randstad':
+'TU,01,01,01,**,BE,**,BE,**,TU-' + 
+'01,XX,XX,01,**,**,**,**,**,01-' + 
+'BE,XX,XX,BR,**,**,**,**,**,01-' + 
+'**,**,**,**,**,**,**,**,**,01-' + 
+'ST,01,01,BE,**,**,**,**,BR,01-' + 
+'**,**,**,**,**,**,**,**,**,**-' + 
+'**,**,**,**,BE,BE,XX,BR,01,01-' + 
+'BR,**,**,**,**,XX,XX,01,01,TU-' + 
+'01,**,**,**,**,**,**,01,TU,EN-' + 
+'TU,01,BE,**,BE,**,**,01,01,TU-',
 
 
     }

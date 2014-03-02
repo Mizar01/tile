@@ -7,6 +7,8 @@ TilesConfig = {
     //"blockingProjectileTypes": ["TileBeam", "TileBeamReceptor", "TileBlock",],
     "bonusTypes": ["life", "energy", "blood", "fear", "shadow", "light"],
     "bonusColors": ["lime", "yellow", "red", "gray", "black", "white" ],
+    "bonusTextures": ["media/particle2.png", "media/particle2.png", "media/hud_blood.png",
+                      "media/hud_fear.png", "media/hud_shadow.png", "media/hud_light.png"]
 }
 
 
@@ -25,9 +27,59 @@ TileMapConfig = function() {
         return null
     }
     
-    this.loadMap = function (mapName) {
+    /**
+     * This builds a random map, but without any sense !!!
+     *
+     * TODO : make it have some sense.
+     **/
+    this.buildRandomMap = function() {
+        
+        var sx = Math.round(Math.random() * 15 + 10)
+        var sy = Math.round(Math.random() * 15 + 10)
+        
+        var startOk = false
+        var endOk = false
+        var symbols = ["**", "ST", "EN", "01", "02", "03", "BE", "BR", "TU", "XX"]
+        var m = ""
+        for (var iy = 0; iy < sy; iy++) {
+            for (var ix = 0; ix < sx; ix++) {
+                var ok = false
+                var t = "**"
+                while (!ok) {
+                    t = ACE3.Utils.arrayRandVal(symbols)
+                    
+                    if ((t == "ST" && startOk) || (t == "EN" && endOk)) {
+                        continue
+                    }else {
+                        if (t == "ST") {
+                            startOk = true
+                        }
+                        if (t == "EN") {
+                            endOk = true
+                        }
+                    }
+                    ok = true
+                }
+                m += t + ","
+                
+            }
+            m = m.substring(0, m.length - 1) + "-"
+        }
+        
+        //console.log(m)
+        
+        this.loadMapString(m)
+
+    }
+    
+    
+    
+    this.loadMap = function(mapName) {
+        this.loadMapString(this.mapStrings[mapName])
+    }
+    
+    this.loadMapString = function (ms) {
     	this.map = []
-    	var ms = this.mapStrings[mapName]
     	var rows = ms.split("-")
     	//detect h, w
     	var h = rows.length
@@ -84,10 +136,10 @@ TileMapConfig = function() {
     this.mapStrings = {
 	
 "test" :
-"**,**,ST,01,BE,01-" +
-"01,02,01,03,**,01-" +
-"**,01,01,01,**,01-" +
-"01,01,**,02,**,EN-" +
+"TU,TU,ST,01,BE,01-" +
+"01,02,01,03,TU,01-" +
+"TU,01,01,01,TU,01-" +
+"01,01,TU,02,TU,EN-" +
 "BR,03,01,02,BE,01-" +
 "01,01,01,02,01,01-",
 

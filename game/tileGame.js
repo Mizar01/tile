@@ -52,7 +52,7 @@ function game_init() {
     tileEnablerManager = new TileEnablerLogic(); //optimizer and essential logic for enabling tiles.
 
     tileMapConfig = new TileMapConfig()
-    tileMapConfig.loadMap("Randstad")
+    tileMapConfig.buildRandomMap()
 
     player = new Player()
 
@@ -258,9 +258,22 @@ ACE3.Utils.colors = {"aliceblue":"#f0f8ff","antiquewhite":"#faebd7","aqua":"#00f
     "violet":"#ee82ee",
     "wheat":"#f5deb3","white":"#ffffff","whitesmoke":"#f5f5f5",
     "yellow":"#ffff00","yellowgreen":"#9acd32"};
-    
+
+/*
+ *  Get a string hexadecimal representation of a named color
+ */
 ACE3.Utils.getHexColor = function (colorName) {
     return parseInt("0x" + ACE3.Utils.colors[colorName].substring(1))
+}
+
+/**
+ * Return a random color code between 0x000000 and 0xffffff
+ *
+ * The number can be represented in decimals.
+ */
+ACE3.Utils.getRandomColor = function() {
+    v = Math.floor(Math.random() * 16777216)
+    return v
 }
 
 //  REWRITE OF ACE3.DisplayValue

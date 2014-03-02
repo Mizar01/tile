@@ -36,10 +36,18 @@ TileUnit.extends(BaseTile, "TileUnit")
 TileUnit.prototype.defineObj = function() {
  
     to = StartTile.prototype.defineObj.call(this, this.colorDefault, 0x000001)
-    this.unitObj = ACE3.Builder.cube2(this.width / 2, this.width, this.width / 2, 0xAA0066)
+    this.unitObj = this.defineUnitObj()
     this.unitObj.position.y = this.width / 2
     to.add(this.unitObj)
     return to
+}
+
+TileUnit.prototype.defineUnitObj = function() {
+    
+    var color = ACE3.Utils.getRandomColor()
+    var body = ACE3.Builder.cube2(this.width / 2, this.width, this.width / 2, color)
+    
+    return body
 }
 
 TileUnit.prototype.select = function() {

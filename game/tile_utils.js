@@ -27,6 +27,16 @@ TileMapConfig = function() {
         return null
     }
     
+    this.buildRandomMap2 = function() {
+        
+        var rm = new TileRandomMap(5, 5)
+        testObj = rm
+        rm.init()
+        var mapString = rm.buildMap()
+        console.log(mapString)
+        this.loadMapString()
+    }
+    
     /**
      * This builds a random map, but without any sense !!!
      *

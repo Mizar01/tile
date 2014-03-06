@@ -14,6 +14,8 @@ var mainThemeSound = null
 
 var testShader = null
 
+var testObj = null
+
 var optimizer = null // optimizer is a memory used throughout the entire game to store useful calculations like
                      // special sectors and other stuff in order to avoid long loops through all the objects.
 
@@ -52,7 +54,7 @@ function game_init() {
     tileEnablerManager = new TileEnablerLogic(); //optimizer and essential logic for enabling tiles.
 
     tileMapConfig = new TileMapConfig()
-    tileMapConfig.buildRandomMap()
+    tileMapConfig.buildRandomMap2()
 
     player = new Player()
 

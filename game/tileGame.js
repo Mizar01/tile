@@ -54,7 +54,8 @@ function game_init() {
     tileEnablerManager = new TileEnablerLogic(); //optimizer and essential logic for enabling tiles.
 
     tileMapConfig = new TileMapConfig()
-    tileMapConfig.buildRandomMap2()
+    //tileMapConfig.buildRandomMap2(20, 20)
+    tileMapConfig.loadMap("Corona")
 
     player = new Player()
 
@@ -338,4 +339,51 @@ ACE3.DisplayValue.prototype.run = function() {
       this.setValue(this.valueFunction())
   }
 }
+
+
+
+TestActor = function(px, py, pz, scale) {
+	ACE3.Actor3D.call(this);
+    
+    var g = new THREE.Object3D
+    var that = this
+    this.scale = new THREE.Vector3(scale, scale, scale)
+    var loader = new THREE.JSONLoader()
+    loader.load("/webgl/3d_models/fighter2.js", function(data) {
+        that.handleLoaded(data)    
+        })
+    this.obj = g
+}
+TestActor.extends(ACE3.Actor3D, "TestActor")
+
+TestActor.prototype.handleLoaded = function(data) {
+    if (data instanceof THREE.Geometry) {
+        data.computeVertexNormals()
+        var m = new THREE.MeshFaceMaterial()
+        var mesh = new THREE.Mesh(data, m)
+        mesh.scale.copy(this.scale)
+        this.obj.add(mesh)
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

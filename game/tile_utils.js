@@ -27,14 +27,14 @@ TileMapConfig = function() {
         return null
     }
     
-    this.buildRandomMap2 = function() {
+    this.buildRandomMap2 = function(mapX, mapZ) {
         
-        var rm = new TileRandomMap(5, 5)
+        var rm = new TileRandomMap(mapX, mapZ)
         testObj = rm
         rm.init()
         var mapString = rm.buildMap()
         console.log(mapString)
-        this.loadMapString()
+        this.loadMapString(mapString)
     }
     
     /**

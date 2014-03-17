@@ -44,9 +44,12 @@ TileUnit.prototype.defineObj = function() {
 
 TileUnit.prototype.defineUnitObj = function() {
     
-    var color = ACE3.Utils.getRandomColor()
-    var body = ACE3.Builder.cube2(this.width / 2, this.width, this.width / 2, color)
+    //var color = ACE3.Utils.getRandomColor()
+    //var body = ACE3.Builder.cube2(this.width / 2, this.width, this.width / 2, color)
     
+    var body = new THREE.Object3D()
+    ACE3.Utils.addModel(body, "fighter2", new THREE.Vector3(0.4, 0.4, 0.4), new THREE.Vector3(0, 0.5, 0))
+    body.rotation.y = -Math.PI
     return body
 }
 

@@ -22,3 +22,7 @@ Game with tiles.
 * in the editor the '+' at the end and the comma ','
 
 - the tileUnit is clickable but you should not be able to attack it if there is no connection.
+
+
+NOTES :
+MODEL COLORS :to see colored models, you have to add at least one ambient light.

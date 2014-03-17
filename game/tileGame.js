@@ -39,10 +39,26 @@ Physijs.scripts.ammo = 'ammo.js';
 
 
 
+
+//function game_init() {
+//    ace3 = new ACE3(false, 1000, 500)
+//    ace3.setBGColor(0xffffff)
+//    gameManager = ace3.defaultActorManager
+//    var a = ACE3.TestUtils.makeTestCube(new THREE.Vector3(0, 0, 0), 0xff0000)
+//    ace3.camera.cameraObj.rotation.x = -Math.PI / 4
+//    ace3.camera.pivot.position.set(0, 5, 8)
+//    ace3.camera.speed = 0.1
+//    ace3.defaultActorManager.play()
+//}
+
+
+
 function game_init() {
     ace3 = new ACE3(true, 1000, 500);
-    ace3.setBGColor(0x000000);
-    ace3.scene.setGravity(new THREE.Vector3( 0, -9.8, 0 )); 
+    //ace3.setBGColor(0x000000);
+    ace3.setBGColor(0xffffff)
+    ace3.scene.setGravity(new THREE.Vector3( 0, -9.8, 0 ));
+    ace3.scene.add( new THREE.AmbientLight( 0xffffff ) );
     //ace3.addPostProcessing();
     //ace3.setFog(0.02)
     //mainThemeSound = $("#main_theme").get(0)
@@ -340,31 +356,50 @@ ACE3.DisplayValue.prototype.run = function() {
   }
 }
 
-
-
-TestActor = function(px, py, pz, scale) {
-	ACE3.Actor3D.call(this);
+/**
+ * Automatically load and add a json model to the pivot
+ *
+ * TODO: the path is fixed, so other params, they should be changeable.
+ *
+ */
+ACE3.Utils.addModel = function(pivotObj, model, scaleV, posV) {
     
-    var g = new THREE.Object3D
+    var loader = new THREE.JSONLoader()
+    loader.load("/webgl/3d_models/" + model + ".js", function(g, m) {
+        if (g instanceof THREE.Geometry) {
+            g.computeVertexNormals()
+            var mesh = new THREE.Mesh(g, new THREE.MeshFaceMaterial(m))
+            mesh.scale.copy(scaleV)
+            mesh.position = posV
+            pivotObj.add(mesh)
+        }   
+        })
+    this.obj = null   
+}
+
+
+
+TestActor = function(px, py, pz, scale, model) {
+	ACE3.Actor3D.call(this);
     var that = this
     this.scale = new THREE.Vector3(scale, scale, scale)
     var loader = new THREE.JSONLoader()
-    loader.load("/webgl/3d_models/fighter2.js", function(data) {
-        that.handleLoaded(data)    
+    this.objStartPos = new THREE.Vector3(px, py, pz)
+    loader.load("/webgl/3d_models/" + model + ".js", function(g, m) {
+        //console.log(g)
+        //console.log(m)
+        if (g instanceof THREE.Geometry) {
+            //g.computeVertexNormals()
+            var mesh = new THREE.Mesh(g, new THREE.MeshFaceMaterial(m))
+            mesh.scale.copy(that.scale)
+            that.obj = mesh
+            that.obj.position = that.objStartPos
+            gameManager.registerActor(that)
+        }   
         })
-    this.obj = g
+    this.obj = null
 }
 TestActor.extends(ACE3.Actor3D, "TestActor")
-
-TestActor.prototype.handleLoaded = function(data) {
-    if (data instanceof THREE.Geometry) {
-        data.computeVertexNormals()
-        var m = new THREE.MeshFaceMaterial()
-        var mesh = new THREE.Mesh(data, m)
-        mesh.scale.copy(this.scale)
-        this.obj.add(mesh)
-    }
-}
 
 
 
